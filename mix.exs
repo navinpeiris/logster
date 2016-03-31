@@ -3,7 +3,7 @@ defmodule Logster.Mixfile do
 
   def project do
     [app: :logster,
-     version: "0.1.1",
+     version: "0.1.2",
      name: "Logster",
      description: "Easily parsable log output for Plug and Phoenix applications",
      package: package,
