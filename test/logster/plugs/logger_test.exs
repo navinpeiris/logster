@@ -93,6 +93,13 @@ defmodule Logster.Plugs.LoggerTest do
     assert message =~ "state=set"
   end
 
+  test "filters parameters from the log" do
+    {_conn, message} = conn(:post, "/hello/world", [password: :bar, foo: [password: :other]]) |> call
+
+    assert message =~ ~s("password":"[FILTERED]")
+    assert message =~ ~s("foo":{"password":"[FILTERED]"})
+  end
+
   test "logs paths with double slashes and trailing slash" do
     {_conn, message} = conn(:get, "/hello/world") |> put_phoenix_privates |> call
 

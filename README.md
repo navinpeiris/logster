@@ -44,6 +44,16 @@ plug Logster.Plugs.Logger
 
 To use it in as a plug, just add `plug Logster.Plugs.Logger` into your desired module
 
+### Filtering parameters
+
+By default, Logster filters parameters named `password`, and replaced the content with `[FILTERED]`.
+
+You can update the parameters that are filtered by specifying the following config:
+
+```elixir
+config :logster, :filter_parameters, ["password", "secret", "token"]
+```
+
 ### License
 
 The MIT License

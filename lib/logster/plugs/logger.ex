@@ -22,6 +22,8 @@ defmodule Logster.Plugs.Logger do
   require Logger
   alias Plug.Conn
 
+  @default_filter_parameters ~w(password)
+
   def init(opts) do
     Keyword.get(opts, :log, :info)
   end
@@ -37,7 +39,7 @@ defmodule Logster.Plugs.Logger do
           formatted_info("method", conn.method),
           formatted_info("path", conn.request_path),
           formatted_phoenix_info(conn),
-          formatted_info("params", conn.params |> Poison.encode!),
+          formatted_info("params", conn.params |> filter_params |> Poison.encode!),
           formatted_info("status", conn.status |> Integer.to_string),
           formatted_info("duration", formatted_duration(before_time, after_time)),
           formatted_info("state", conn.state |> Atom.to_string, "")
@@ -58,5 +60,18 @@ defmodule Logster.Plugs.Logger do
   end
   defp formatted_phoenix_info(_), do: []
 
+  defp filter_params(%{} = params) do
+    Enum.into params, %{}, fn {k, v} ->
+      if is_binary(k) && String.contains?(k, params_to_filter) do
+        {k, "[FILTERED]"}
+      else
+        {k, filter_params(v)}
+      end
+    end
+  end
+  defp filter_params(params), do: params
+
   defp formatted_info(name, value, postfix \\ ?\s), do: [name, "=", value, postfix]
+
+  defp params_to_filter, do: Application.get_env(:logster, :filter_parameters, @default_filter_parameters)
 end
