@@ -1,4 +1,6 @@
-# Logster [![Build Status](https://travis-ci.org/navinpeiris/logster.svg?branch=master)](https://travis-ci.org/navinpeiris/logster)
+# Logster
+
+[![Build Status](https://travis-ci.org/navinpeiris/logster.svg?branch=master)](https://travis-ci.org/navinpeiris/logster)
 
 An easy to parse, one line logger for Elixir Plug.Conn and Phoenix, heavily inspired by [lograge](https://github.com/roidrage/lograge).
 
