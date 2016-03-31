@@ -29,11 +29,12 @@ defmodule Logster.Plugs.Logger do
   end
 
   def call(conn, config_log_level) do
-    before_time = :os.timestamp()
+    start_time = current_time
 
     Conn.register_before_send(conn, fn conn ->
       Logger.log log_level(conn, config_log_level), fn ->
-        after_time = :os.timestamp()
+        stop_time = current_time
+        duration = time_diff(start_time, stop_time)
 
         [
           formatted_info("method", conn.method),
@@ -41,7 +42,7 @@ defmodule Logster.Plugs.Logger do
           formatted_phoenix_info(conn),
           formatted_info("params", conn.params |> filter_params |> Poison.encode!),
           formatted_info("status", conn.status |> Integer.to_string),
-          formatted_info("duration", formatted_duration(before_time, after_time)),
+          formatted_info("duration", formatted_duration(duration)),
           formatted_info("state", conn.state |> Atom.to_string, "")
         ]
       end
@@ -49,7 +50,16 @@ defmodule Logster.Plugs.Logger do
     end)
   end
 
-  defp formatted_duration(before_time, after_time), do: :timer.now_diff(after_time, before_time) / 1000 |> Float.to_string(decimals: 3)
+  # TODO: remove this once Plug supports only Elixir 1.2.
+  if function_exported?(:erlang, :monotonic_time, 0) do
+    defp current_time, do: :erlang.monotonic_time
+    defp time_diff(start, stop), do: (stop - start) |> :erlang.convert_time_unit(:native, :micro_seconds)
+  else
+    defp current_time, do: :os.timestamp()
+    defp time_diff(start, stop), do: :timer.now_diff(stop, start)
+  end
+
+  defp formatted_duration(duration), do: duration / 1000 |> Float.to_string(decimals: 3)
 
   defp formatted_phoenix_info(%{private: %{phoenix_format: format, phoenix_controller: controller, phoenix_action: action}}) do
     [
@@ -72,7 +82,6 @@ defmodule Logster.Plugs.Logger do
   defp filter_params(params), do: params
 
   defp formatted_info(name, value, postfix \\ ?\s), do: [name, "=", value, postfix]
-
   defp params_to_filter, do: Application.get_env(:logster, :filter_parameters, @default_filter_parameters)
 
   defp log_level(%{private: %{logster_log_level: logster_log_level}}, _config_log_level), do: logster_log_level
