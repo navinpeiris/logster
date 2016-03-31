@@ -50,14 +50,8 @@ defmodule Logster.Plugs.Logger do
     end)
   end
 
-  # TODO: remove this once Plug supports only Elixir 1.2.
-  if function_exported?(:erlang, :monotonic_time, 0) do
-    defp current_time, do: :erlang.monotonic_time
-    defp time_diff(start, stop), do: (stop - start) |> :erlang.convert_time_unit(:native, :micro_seconds)
-  else
-    defp current_time, do: :os.timestamp()
-    defp time_diff(start, stop), do: :timer.now_diff(stop, start)
-  end
+  defp current_time, do: :erlang.monotonic_time
+  defp time_diff(start, stop), do: (stop - start) |> :erlang.convert_time_unit(:native, :micro_seconds)
 
   defp formatted_duration(duration), do: duration / 1000 |> Float.to_string(decimals: 3)
 
