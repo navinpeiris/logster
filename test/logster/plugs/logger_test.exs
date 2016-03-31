@@ -57,7 +57,7 @@ defmodule Logster.Plugs.LoggerTest do
     data = capture_io(:user, fn ->
       Process.put(:capture_log, fun.())
       Logger.flush()
-    end) |> String.split("\n", trim: true) |> List.first
+    end)
 
     {Process.get(:capture_log), data}
   end
