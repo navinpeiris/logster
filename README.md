@@ -1,6 +1,10 @@
 # Logster
 
 [![Build Status](https://travis-ci.org/navinpeiris/logster.svg?branch=master)](https://travis-ci.org/navinpeiris/logster)
+[![Hex version](https://img.shields.io/hexpm/v/logster.svg "Hex version")](https://hex.pm/packages/logster)
+[![Hex downloads](https://img.shields.io/hexpm/dt/logster.svg "Hex downloads")](https://hex.pm/packages/logster)
+[![Deps Status](https://beta.hexfaktor.org/badge/all/github/navinpeiris/logster.svg)](https://beta.hexfaktor.org/github/navinpeiris/logster)
+[![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org)
 
 An easy to parse, one line logger for Elixir Plug.Conn and Phoenix, heavily inspired by [lograge](https://github.com/roidrage/lograge).
 
