@@ -28,11 +28,11 @@ defmodule Logster.Plugs.Logger do
     Keyword.get(opts, :log, :info)
   end
 
-  def call(conn, level) do
+  def call(conn, config_log_level) do
     before_time = :os.timestamp()
 
     Conn.register_before_send(conn, fn conn ->
-      Logger.log level, fn ->
+      Logger.log log_level(conn, config_log_level), fn ->
         after_time = :os.timestamp()
 
         [
@@ -74,4 +74,7 @@ defmodule Logster.Plugs.Logger do
   defp formatted_info(name, value, postfix \\ ?\s), do: [name, "=", value, postfix]
 
   defp params_to_filter, do: Application.get_env(:logster, :filter_parameters, @default_filter_parameters)
+
+  defp log_level(%{private: %{logster_log_level: logster_log_level}}, _config_log_level), do: logster_log_level
+  defp log_level(_, config_log_level), do: config_log_level
 end

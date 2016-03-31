@@ -48,11 +48,27 @@ To use it in as a plug, just add `plug Logster.Plugs.Logger` into your desired m
 
 By default, Logster filters parameters named `password`, and replaced the content with `[FILTERED]`.
 
-You can update the parameters that are filtered by specifying the following config:
+You can update the parameters that are filtered by adding the following to your configuration file with your list of params to be filtered.
 
 ```elixir
 config :logster, :filter_parameters, ["password", "secret", "token"]
 ```
+
+### Changing log level for a controller/action
+
+To change the Logster log level for a specific controller you can use the following plug within that controller:
+
+```elixir
+plug Logster.Plugs.ChangeLogLevel, to: :debug
+```
+
+And to change it for a specific action within the controller, add the following:
+
+```elixir
+plug Logster.Plugs.ChangeLogLevel, to: :debug when action in [:index, :show]
+```
+
+This is specially useful for cases such as when you want to lower the log level for a healthcheck endpoint that gets hit every few seconds.
 
 ### License
 
