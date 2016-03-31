@@ -6,20 +6,20 @@
 [![Deps Status](https://beta.hexfaktor.org/badge/all/github/navinpeiris/logster.svg)](https://beta.hexfaktor.org/github/navinpeiris/logster)
 [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org)
 
-An easy to parse, one line logger for Elixir Plug.Conn and Phoenix, heavily inspired by [lograge](https://github.com/roidrage/lograge).
+An easy to parse, one line logger for Elixir Plug.Conn and Phoenix, inspired by [lograge](https://github.com/roidrage/lograge).
 
-With the default `Plug.Logger`, the log output for a request looks like this:
+With the default `Plug.Logger`, the log output for a request looks like:
 ```
 [info] GET /articles/some-article
 [info] Sent 200 in 21ms
 ```
 
-With Logster, we've got logging that's much more easily to parse and search through, such as:
+With Logster, we've got logging that's much easier to parse and search through, such as:
 ```
 [info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show params={"id":"some-article"} status=200 duration=0.402 state=set
 ```
 
-This becomes very handy specially when integrating with a log management service such as [Logentries](https://logentries.com/) or [Papertrail](https://papertrailapp.com/).
+This becomes handy specially when integrating with log management services such as [Logentries](https://logentries.com/) or [Papertrail](https://papertrailapp.com/).
 
 ## Installation
 
@@ -39,34 +39,36 @@ $ mix deps.get
 
 ## Usage
 
-To use with a Phoenix application, replace `Plug.Logger` in the `endpoint.ex` file with `Logster.Plugs.Logger`:
+To use with a Phoenix application, replace `Plug.Logger` in the projects `endpoint.ex` file with `Logster.Plugs.Logger`:
 
 ```elixir
 # plug Plug.Logger
 plug Logster.Plugs.Logger
 ```
 
-To use it in as a plug, just add `plug Logster.Plugs.Logger` into your desired module
+To use it in as a plug, just add `plug Logster.Plugs.Logger` into the relevant module.
 
 ### Filtering parameters
 
-By default, Logster filters parameters named `password`, and replaced the content with `[FILTERED]`.
+By default, Logster filters parameters named `password`, and replaces the content with `[FILTERED]`.
 
-You can update the parameters that are filtered by adding the following to your configuration file with your list of params to be filtered.
+You can update the list of parameters that are filtered by adding the following to your configuration file:
 
 ```elixir
 config :logster, :filter_parameters, ["password", "secret", "token"]
 ```
 
-### Changing log level for a controller/action
+### Changing the log level for a specific controller/action
 
-To change the Logster log level for a specific controller you can use the following plug within that controller:
+To change the Logster log level for a specific controller and/or action, you use the `Logster.Plugs.ChangeLogLevel` plug.
+
+For example, to change the logging of all requests in a controller to `debug`, add the following to that controller:
 
 ```elixir
 plug Logster.Plugs.ChangeLogLevel, to: :debug
 ```
 
-And to change it for a specific action within the controller, add the following:
+And to change it only for `index` and `show` actions:
 
 ```elixir
 plug Logster.Plugs.ChangeLogLevel, to: :debug when action in [:index, :show]
