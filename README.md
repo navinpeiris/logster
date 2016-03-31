@@ -29,7 +29,7 @@ end
 
 Then, update your dependencies:
 
-```sh-session
+```
 $ mix deps.get
 ```
 
