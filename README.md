@@ -27,7 +27,7 @@ First, add Logster to your `mix.exs` dependencies:
 
 ```elixir
 def deps do
-  [{:logster, "~> 0.1.3"}]
+  [{:logster, "~> 0.1.4"}]
 end
 ```
 
