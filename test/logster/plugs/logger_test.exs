@@ -72,14 +72,20 @@ defmodule Logster.Plugs.LoggerTest do
     assert message =~ ~r/duration=\d+.\d{3}/u
     assert message =~ "state=set"
 
-    {_conn, message} = conn(:post, "/hello/world", [foo: :bar, upload: %Plug.Upload{content_type: "image/png", filename: "blah.png"}]) |> call
+    {_conn, message} = conn(:post, "/hello/world", [foo: :bar]) |> call
 
     assert message =~ "method=POST"
     assert message =~ "path=/hello/world"
-    assert message =~ ~s(params={"upload":{"path":null,"filename":"blah.png","content_type":"image/png"},"foo":"bar"})
+    assert message =~ ~s(params={"foo":"bar"})
     assert message =~ "status=200"
     assert message =~ ~r/duration=\d+.\d{3}/u
     assert message =~ "state=set"
+  end
+
+  test "logs file upload params" do
+    {_conn, message} = conn(:post, "/hello/world", [upload: %Plug.Upload{content_type: "image/png", filename: "blah.png"}]) |> call
+
+    assert message =~ ~s(params={"upload":{"path":null,"filename":"blah.png","content_type":"image/png"})
   end
 
   test "logs phoenix related attributes if present" do
