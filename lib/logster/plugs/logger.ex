@@ -64,19 +64,22 @@ defmodule Logster.Plugs.Logger do
   end
   defp formatted_phoenix_info(_), do: []
 
-  defp filter_params(%{} = params) do
-    Enum.into params, %{}, fn {k, v} ->
+  defp filter_params(params), do: do_filter_params(params, Application.get_env(:logster, :filter_parameters, @default_filter_parameters))
+
+  def do_filter_params(%{__struct__: mod} = struct, _params_to_filter) when is_atom(mod), do: struct
+  def do_filter_params(%{} = map, params_to_filter) do
+    Enum.into map, %{}, fn {k, v} ->
       if is_binary(k) && String.contains?(k, params_to_filter) do
         {k, "[FILTERED]"}
       else
-        {k, filter_params(v)}
+        {k, do_filter_params(v, params_to_filter)}
       end
     end
   end
-  defp filter_params(params), do: params
+  def do_filter_params([_|_] = list, params_to_filter), do: Enum.map(list, &do_filter_params(&1, params_to_filter))
+  def do_filter_params(other, _params_to_filter), do: other
 
   defp formatted_info(name, value, postfix \\ ?\s), do: [name, "=", value, postfix]
-  defp params_to_filter, do: Application.get_env(:logster, :filter_parameters, @default_filter_parameters)
 
   defp log_level(%{private: %{logster_log_level: logster_log_level}}, _config_log_level), do: logster_log_level
   defp log_level(_, config_log_level), do: config_log_level
