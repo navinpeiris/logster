@@ -53,7 +53,7 @@ defmodule Logster.Plugs.Logger do
   defp current_time, do: :erlang.monotonic_time
   defp time_diff(start, stop), do: (stop - start) |> :erlang.convert_time_unit(:native, :micro_seconds)
 
-  defp formatted_duration(duration), do: duration / 1000 |> Float.to_string(decimals: 3)
+  defp formatted_duration(duration), do: duration / 1000
 
   defp formatted_phoenix_info(%{private: %{phoenix_format: format, phoenix_controller: controller, phoenix_action: action}}) do
     [

@@ -14,6 +14,10 @@ defmodule Logster.StringFormatter do
     value
   end
 
+  defp format_value(value) when is_float(value) do
+    Float.to_string(value, decimals: 3)
+  end
+
   defp format_value(value) when is_atom(value) or is_integer(value) do
     to_string(value)
   end
@@ -21,6 +25,4 @@ defmodule Logster.StringFormatter do
   defp format_value(value) when is_map(value) do
     Poison.encode! value
   end
-
-  
 end

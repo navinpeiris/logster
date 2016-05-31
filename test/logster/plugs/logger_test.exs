@@ -154,6 +154,8 @@ defmodule Logster.Plugs.LoggerTest do
     json = message
     |> String.split
     |> Enum.at(3)
-    assert %{"path" =>  "/good"} = Poison.decode!(json)
+    assert %{"path" =>  "/good"} = decoded = Poison.decode!(json)
+    %{"duration" => duration} = decoded
+    assert is_float(duration)
   end
 end
