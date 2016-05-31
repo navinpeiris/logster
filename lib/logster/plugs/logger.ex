@@ -25,26 +25,26 @@ defmodule Logster.Plugs.Logger do
   @default_filter_parameters ~w(password)
 
   def init(opts) do
-    Keyword.get(opts, :log, :info)
+    opts
   end
 
-  def call(conn, config_log_level) do
+  def call(conn, opts) do
     start_time = current_time
 
     Conn.register_before_send(conn, fn conn ->
-      Logger.log log_level(conn, config_log_level), fn ->
+      Logger.log log_level(conn, opts), fn ->
+        formatter = Keyword.get(opts, :formatter, Logster.StringFormatter)
         stop_time = current_time
         duration = time_diff(start_time, stop_time)
-
-        [
-          formatted_info("method", conn.method),
-          formatted_info("path", conn.request_path),
-          formatted_phoenix_info(conn),
-          formatted_info("params", conn.params |> filter_params |> Poison.encode!),
-          formatted_info("status", conn.status |> Integer.to_string),
-          formatted_info("duration", formatted_duration(duration)),
-          formatted_info("state", conn.state |> Atom.to_string, "")
-        ]
+        []
+        |> Keyword.put(:method, conn.method)
+        |> Keyword.put(:path, conn.request_path)
+        |> Keyword.merge(formatted_phoenix_info(conn))
+        |> Keyword.put(:params, filter_params(conn.params))
+        |> Keyword.put(:status, conn.status)
+        |> Keyword.put(:duration, formatted_duration(duration))
+        |> Keyword.put(:state, conn.state)
+        |> formatter.format
       end
       conn
     end)
@@ -57,9 +57,9 @@ defmodule Logster.Plugs.Logger do
 
   defp formatted_phoenix_info(%{private: %{phoenix_format: format, phoenix_controller: controller, phoenix_action: action}}) do
     [
-      formatted_info("format", format),
-      formatted_info("controller", controller |> inspect),
-      formatted_info("action", action |> Atom.to_string)
+      {:format, format},
+      {:controller, controller |> inspect},
+      {:action, action |> Atom.to_string}
     ]
   end
   defp formatted_phoenix_info(_), do: []
@@ -79,8 +79,7 @@ defmodule Logster.Plugs.Logger do
   def do_filter_params([_|_] = list, params_to_filter), do: Enum.map(list, &do_filter_params(&1, params_to_filter))
   def do_filter_params(other, _params_to_filter), do: other
 
-  defp formatted_info(name, value, postfix \\ ?\s), do: [name, "=", value, postfix]
 
-  defp log_level(%{private: %{logster_log_level: logster_log_level}}, _config_log_level), do: logster_log_level
-  defp log_level(_, config_log_level), do: config_log_level
+  defp log_level(%{private: %{logster_log_level: logster_log_level}}, _opts), do: logster_log_level
+  defp log_level(_, opts), do: Keyword.get(opts, :log, :info)
 end
