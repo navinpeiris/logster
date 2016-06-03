@@ -53,6 +53,23 @@ defmodule Logster.Plugs.LoggerTest do
     defp halter(conn, _), do: halt(conn)
   end
 
+  defmodule MyJSONPlug do
+    use Plug.Builder
+
+    plug Logster.Plugs.Logger,
+      formatter: Logster.JSONFormatter
+
+    plug Plug.Parsers,
+      parsers: [:urlencoded, :multipart, :json],
+      pass: ["*/*"],
+      json_decoder: Poison
+    plug :passthrough
+
+    defp passthrough(conn, _) do
+      Plug.Conn.send_resp(conn, 200, "Passthrough")
+    end
+  end
+
   defp capture_log(fun) do
     data = capture_io(:user, fn ->
       Process.put(:capture_log, fun.())
@@ -128,5 +145,17 @@ defmodule Logster.Plugs.LoggerTest do
     end
 
     assert message =~ "Logster.Plugs.LoggerTest.MyHaltingPlug halted in :halter/2"
+  end
+
+  test "logs to json with the JSONFormatter" do
+    {_conn, message} = capture_log fn ->
+      conn(:get, "/good") |> MyJSONPlug.call([])
+    end
+    json = message
+    |> String.split
+    |> Enum.at(3)
+    assert %{"path" =>  "/good"} = decoded = Poison.decode!(json)
+    %{"duration" => duration} = decoded
+    assert is_float(duration)
   end
 end

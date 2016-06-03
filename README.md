@@ -76,6 +76,26 @@ plug Logster.Plugs.ChangeLogLevel, to: :debug when action in [:index, :show]
 
 This is specially useful for cases such as when you want to lower the log level for a healthcheck endpoint that gets hit every few seconds.
 
+### Changing the formatter
+
+Logster allows you to use a different formatter to get your log lines looking just how you want. It comes with two built-in formatters: `Loggster.StringFormatter` and `Loggster.JSONFormatter`
+
+To use `Loggster.JSONFormatter`, supply the `formatter` option when you use the `Loggster.Plugs.Logger` plug:
+
+```elixir
+plug Loggster.Plugs.Logger, formatter: Loggster.JSONFormatter
+```
+
+That means your log messages will be formatted thusly:
+```
+{"status":200,"state":"set","path":"hello","params":{},"method":"GET","format":"json","duration":20.647,"controller":"App.HelloController","action":"show"
+```
+*Caution:* There is no guarantee that what reaches your console will be valid JSON. The Elixir `Logger` module has its own formatting which may be appended to your message. See the [Logger documentation](http://elixir-lang.org/docs/stable/logger/Logger.html) for more information.
+
+#### Writing your own formatter
+
+To write your own formatter, all that is required is a module which defines a `format/1` function, which accepts a keyword list and returns a string.
+
 ### License
 
 The MIT License
