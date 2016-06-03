@@ -78,12 +78,12 @@ This is specially useful for cases such as when you want to lower the log level 
 
 ### Changing the formatter
 
-Logster allows you to use a different formatter to get your log lines looking just how you want. It comes with two built-in formatters: `Loggster.StringFormatter` and `Loggster.JSONFormatter`
+Logster allows you to use a different formatter to get your log lines looking just how you want. It comes with two built-in formatters: `Logster.StringFormatter` and `Logster.JSONFormatter`
 
-To use `Loggster.JSONFormatter`, supply the `formatter` option when you use the `Loggster.Plugs.Logger` plug:
+To use `Logster.JSONFormatter`, supply the `formatter` option when you use the `Logster.Plugs.Logger` plug:
 
 ```elixir
-plug Loggster.Plugs.Logger, formatter: Loggster.JSONFormatter
+plug Logster.Plugs.Logger, formatter: Logster.JSONFormatter
 ```
 
 That means your log messages will be formatted thusly:
