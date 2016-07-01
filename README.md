@@ -27,7 +27,7 @@ First, add Logster to your `mix.exs` dependencies:
 
 ```elixir
 def deps do
-  [{:logster, "~> 0.2.0"}]
+  [{:logster, "~> 0.3.0"}]
 end
 ```
 
@@ -91,6 +91,14 @@ That means your log messages will be formatted thusly:
 {"status":200,"state":"set","path":"hello","params":{},"method":"GET","format":"json","duration":20.647,"controller":"App.HelloController","action":"show"
 ```
 *Caution:* There is no guarantee that what reaches your console will be valid JSON. The Elixir `Logger` module has its own formatting which may be appended to your message. See the [Logger documentation](http://elixir-lang.org/docs/stable/logger/Logger.html) for more information.
+
+### Adding custom metadata
+
+Custom metadata can be added using `Logger.metadata` such as:
+
+```elixir
+Logger.metadata(%{user_id: "123", foo: "bar"})
+```
 
 #### Writing your own formatter
 
