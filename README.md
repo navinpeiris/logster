@@ -31,6 +31,14 @@ def deps do
 end
 ```
 
+and add it to your list of applications:
+
+```elixir
+def application() do
+  [applications: [:logster]]
+end
+```
+
 Then, update your dependencies:
 
 ```
