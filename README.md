@@ -66,6 +66,16 @@ You can update the list of parameters that are filtered by adding the following 
 config :logster, :filter_parameters, ["password", "secret", "token"]
 ```
 
+### HTTP headers support
+
+By default, Logster won't parse and log HTTP headers.
+
+But you can update the list of headers that should be parsed and logged. The logged headers will be added under `headers`. Both plain text and JSON formatters are supported.
+
+```elixir
+config :logster, :allowed_headers, ["my-header-one", "my-header-two"]
+```
+
 ### Changing the log level for a specific controller/action
 
 To change the Logster log level for a specific controller and/or action, you use the `Logster.Plugs.ChangeLogLevel` plug.
