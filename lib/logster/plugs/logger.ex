@@ -23,6 +23,7 @@ defmodule Logster.Plugs.Logger do
   alias Plug.Conn
 
   @default_filter_parameters ~w(password)
+  @default_allowed_headers ~w()
 
   def init(opts) do
     opts
@@ -44,11 +45,24 @@ defmodule Logster.Plugs.Logger do
         |> Keyword.put(:status, conn.status)
         |> Keyword.put(:duration, formatted_duration(duration))
         |> Keyword.put(:state, conn.state)
+        |> Keyword.merge(headers(conn.req_headers, Application.get_env(:logster, :allowed_headers, @default_allowed_headers)))
         |> Keyword.merge(Logger.metadata())
         |> formatter.format
       end
       conn
     end)
+  end
+
+  defp headers(_, []) do
+    []
+  end
+
+  defp headers(conn_headers, allowed_headers) do
+    map = conn_headers
+    |> Enum.filter(fn({k, _}) -> Enum.member?(allowed_headers, k) end)
+    |> Enum.into(%{}, fn {k,v} -> {k,v} end)
+
+    [{:headers, map}]
   end
 
   defp current_time, do: :erlang.monotonic_time

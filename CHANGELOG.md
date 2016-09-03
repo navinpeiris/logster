@@ -1,3 +1,7 @@
+# 0.4.0
+
+- Add HTTP header logging. Thanks to @zepplock
+
 # 0.3.0
 
 - Add custom metadata to the log. Thanks to @tanguyantoine
