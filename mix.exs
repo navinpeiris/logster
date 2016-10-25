@@ -22,10 +22,10 @@ defmodule Logster.Mixfile do
 
   defp deps do
     [{:plug, "~> 1.0"},
-     {:poison, "~> 1.5 or ~> 2.0"},
+     {:poison, "~> 1.5 or ~> 2.0 or ~> 3.0"},
 
-     {:earmark, "~> 0.1", only: :dev},
-     {:ex_doc, "~> 0.11", only: :dev},
+     {:earmark, "~> 1.0", only: :dev},
+     {:ex_doc, "~> 0.14", only: :dev},
 
      {:mix_test_watch, "~> 0.2", only: :dev},
      {:ex_unit_notifier, "~> 0.1", only: :test}]
