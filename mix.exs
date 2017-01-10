@@ -6,13 +6,13 @@ defmodule Logster.Mixfile do
      version: "0.4.2",
      name: "Logster",
      description: "Easily parsable single-line plain text and JSON logger for Plug and Phoenix applications",
-     package: package,
+     package: package(),
      source_url: "https://github.com/navinpeiris/logster",
      homepage_url: "https://github.com/navinpeiris/logster",
      elixir: "~> 1.2",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps,
+     deps: deps(),
      docs: [extras: ["README.md"]]]
   end
 

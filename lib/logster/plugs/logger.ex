@@ -30,12 +30,12 @@ defmodule Logster.Plugs.Logger do
   end
 
   def call(conn, opts) do
-    start_time = current_time
+    start_time = current_time()
 
     Conn.register_before_send(conn, fn conn ->
       Logger.log log_level(conn, opts), fn ->
         formatter = Keyword.get(opts, :formatter, Logster.StringFormatter)
-        stop_time = current_time
+        stop_time = current_time()
         duration = time_diff(start_time, stop_time)
         []
         |> Keyword.put(:method, conn.method)
@@ -53,10 +53,7 @@ defmodule Logster.Plugs.Logger do
     end)
   end
 
-  defp headers(_, []) do
-    []
-  end
-
+  defp headers(_, []), do: []
   defp headers(conn_headers, allowed_headers) do
     map = conn_headers
     |> Enum.filter(fn({k, _}) -> Enum.member?(allowed_headers, k) end)
