@@ -41,7 +41,7 @@ defmodule Logster.Plugs.Logger do
         |> Keyword.put(:method, conn.method)
         |> Keyword.put(:path, conn.request_path)
         |> Keyword.merge(formatted_phoenix_info(conn))
-        |> Keyword.put(:params, filter_params(conn.params))
+        |> Keyword.put(:params, get_params(conn))
         |> Keyword.put(:status, conn.status)
         |> Keyword.put(:duration, formatted_duration(duration))
         |> Keyword.put(:state, conn.state)
@@ -76,7 +76,15 @@ defmodule Logster.Plugs.Logger do
   end
   defp formatted_phoenix_info(_), do: []
 
-  defp filter_params(params), do: do_filter_params(params, Application.get_env(:logster, :filter_parameters, @default_filter_parameters))
+  defp get_params(%{params: params}) do
+    params
+    |> do_filter_params(Application.get_env(:logster, :filter_parameters, @default_filter_parameters))
+    |> Enum.map(fn
+      {k, v} when is_binary(v) -> {k, URI.encode(v)}
+      non_binary -> non_binary
+    end)
+    |> Enum.into(%{})
+  end
 
   def do_filter_params(%{__struct__: mod} = struct, _params_to_filter) when is_atom(mod), do: struct
   def do_filter_params(%{} = map, params_to_filter) do

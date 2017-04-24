@@ -114,6 +114,11 @@ defmodule Logster.Plugs.LoggerTest do
     assert message =~ "state=set"
   end
 
+  test "supports non-printable ascii params" do
+    {_conn, message} = conn(:get, "/?v=ok%85ok") |> call
+    assert message =~ "ok%85ok"
+  end
+
   test "logs file upload params" do
     {_conn, message} = conn(:post, "/hello/world", [upload: %Plug.Upload{content_type: "image/png", filename: "blah.png"}]) |> call
 
