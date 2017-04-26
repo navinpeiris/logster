@@ -1,3 +1,7 @@
+# 0.5.0
+
+- Fixe issue where an exception was thrown when params contains `%` [#10](https://github.com/navinpeiris/logster/issues/10). Thanks to @tsubery
+
 # 0.4.0
 
 - Add HTTP header logging. Thanks to @zepplock
