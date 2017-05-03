@@ -114,6 +114,11 @@ defmodule Logster.Plugs.LoggerTest do
     assert message =~ "state=set"
   end
 
+  test "handles params with spaces" do
+    {_conn, message} = conn(:post, "/hello/world", [foo: "one two three"]) |> call
+    assert message =~ ~s(params={"foo":"one two three"})
+  end
+
   test "supports non-printable ascii params" do
     {_conn, message} = conn(:get, "/?v=ok%85ok") |> call
     assert message =~ "ok%85ok"

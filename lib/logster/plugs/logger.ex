@@ -79,11 +79,7 @@ defmodule Logster.Plugs.Logger do
   defp get_params(%{params: params}) do
     params
     |> do_filter_params(Application.get_env(:logster, :filter_parameters, @default_filter_parameters))
-    |> Enum.map(fn
-      {k, v} when is_binary(v) -> {k, URI.encode(v)}
-      non_binary -> non_binary
-    end)
-    |> Enum.into(%{})
+    |> do_format_values
   end
 
   def do_filter_params(%{__struct__: mod} = struct, _params_to_filter) when is_atom(mod), do: struct
@@ -99,6 +95,16 @@ defmodule Logster.Plugs.Logger do
   def do_filter_params([_|_] = list, params_to_filter), do: Enum.map(list, &do_filter_params(&1, params_to_filter))
   def do_filter_params(other, _params_to_filter), do: other
 
+  def do_format_values(%{} = params), do: params |> Enum.map(&do_format_value/1) |> Enum.into(%{})
+
+  def do_format_value({key, value}) when is_binary(value) do
+    if String.valid?(value) do
+      {key, value}
+    else
+      {key, URI.encode(value)}
+    end
+  end
+  def do_format_value(val), do: val
 
   defp log_level(%{private: %{logster_log_level: logster_log_level}}, _opts), do: logster_log_level
   defp log_level(_, opts), do: Keyword.get(opts, :log, :info)
