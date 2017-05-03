@@ -1,6 +1,10 @@
+# 0.6.0
+
+- Fixes issue where all strings were getting url encoded in log output
+
 # 0.5.0
 
-- Fixe issue where an exception was thrown when params contains `%` [#10](https://github.com/navinpeiris/logster/issues/10). Thanks to @tsubery
+- Fixes issue where an exception was thrown when params contains `%` [#10](https://github.com/navinpeiris/logster/issues/10). Thanks to @tsubery
 
 # 0.4.0
 
