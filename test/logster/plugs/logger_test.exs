@@ -70,6 +70,30 @@ defmodule Logster.Plugs.LoggerTest do
     end
   end
 
+  defmodule MyCustomFieldsPlug do
+    use Plug.Builder
+
+    plug Logster.Plugs.Logger,
+      custom_fields: Logster.Plugs.LoggerTest.MyCustomFields
+    plug Plug.Parsers,
+      parsers: [:urlencoded, :multipart, :json],
+      pass: ["*/*"],
+      json_decoder: Poison
+    plug :passthrough
+
+    defp passthrough(conn, _) do
+      Plug.Conn.send_resp(conn, 200, "Passthrough")
+    end
+  end
+
+  defmodule MyCustomFields do
+    def custom_fields(conn) do
+      []
+      |> Keyword.put(:scheme, conn.scheme)
+      |> Keyword.put(:host, conn.host)
+    end
+  end
+
   defmodule MyCustomLogMetadata do
     use Plug.Builder
     plug Logster.Plugs.Logger
@@ -191,6 +215,15 @@ defmodule Logster.Plugs.LoggerTest do
     assert message =~ "custom_metadata=OK"
   end
 
+  test "Custom fields" do
+    {_conn, message} = capture_log fn ->
+      conn(:get, "/foo") |> MyCustomFieldsPlug.call([])
+    end
+
+    assert message =~ "host=www.example.com"
+    assert message =~ "scheme=http"
+  end
+
   test "[TextFormatter] log headers: no default headers, no output" do
     Application.put_env(:logster, :allowed_headers, [])
     {_conn, message} = conn(:post, "/hello/world", []) |> put_req_header("x-test-header", "test value") |> call
@@ -231,5 +264,4 @@ defmodule Logster.Plugs.LoggerTest do
     refute Poison.decode!(json)["headers"]["my-header-two"]
     refute Poison.decode!(json)["headers"]["my-header-three"]
   end
-
 end

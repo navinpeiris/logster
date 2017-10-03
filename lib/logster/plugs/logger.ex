@@ -35,6 +35,7 @@ defmodule Logster.Plugs.Logger do
     Conn.register_before_send(conn, fn conn ->
       Logger.log log_level(conn, opts), fn ->
         formatter = Keyword.get(opts, :formatter, Logster.StringFormatter)
+        custom_fields = Keyword.get(opts, :custom_fields, __MODULE__)
         stop_time = current_time()
         duration = time_diff(start_time, stop_time)
         []
@@ -47,10 +48,15 @@ defmodule Logster.Plugs.Logger do
         |> Keyword.put(:state, conn.state)
         |> Keyword.merge(headers(conn.req_headers, Application.get_env(:logster, :allowed_headers, @default_allowed_headers)))
         |> Keyword.merge(Logger.metadata())
+        |> Keyword.merge(custom_fields.custom_fields(conn))
         |> formatter.format
       end
       conn
     end)
+  end
+
+  def custom_fields(_) do
+    []
   end
 
   defp headers(_, []), do: []
