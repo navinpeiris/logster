@@ -70,6 +70,22 @@ defmodule Logster.Plugs.LoggerTest do
     end
   end
 
+  defmodule MyRenameFieldsPlug do
+    use Plug.Builder
+
+    plug Logster.Plugs.Logger,
+      renames: %{duration: :responsetime, status: :mystatus}
+    plug Plug.Parsers,
+      parsers: [:urlencoded, :multipart, :json],
+      pass: ["*/*"],
+      json_decoder: Poison
+    plug :passthrough
+
+    defp passthrough(conn, _) do
+      Plug.Conn.send_resp(conn, 200, "Passthrough")
+    end
+  end
+
   defmodule MyCustomLogMetadata do
     use Plug.Builder
     plug Logster.Plugs.Logger
@@ -189,6 +205,15 @@ defmodule Logster.Plugs.LoggerTest do
       conn(:get, "/good") |> MyCustomLogMetadata.call([])
     end
     assert message =~ "custom_metadata=OK"
+  end
+
+  test "renaming fields" do
+    {_conn, message} = capture_log fn ->
+      conn(:get, "/foo") |> MyRenameFieldsPlug.call([])
+    end
+
+    assert message =~ "mystatus=200"
+    assert message =~ ~r/responsetime=\d+.\d{3}/u
   end
 
   test "[TextFormatter] log headers: no default headers, no output" do
