@@ -74,7 +74,7 @@ defmodule Logster.Plugs.LoggerTest do
     use Plug.Builder
 
     plug Logster.Plugs.Logger,
-      renames: [{:status, :mystatus}, {:duration, :responsetime}]
+      renames: %{duration: :responsetime, status: :mystatus}
     plug Plug.Parsers,
       parsers: [:urlencoded, :multipart, :json],
       pass: ["*/*"],
@@ -207,7 +207,7 @@ defmodule Logster.Plugs.LoggerTest do
     assert message =~ "custom_metadata=OK"
   end
 
-  test "Renaming fields" do
+  test "renaming fields" do
     {_conn, message} = capture_log fn ->
       conn(:get, "/foo") |> MyRenameFieldsPlug.call([])
     end

@@ -35,7 +35,7 @@ defmodule Logster.Plugs.Logger do
     Conn.register_before_send(conn, fn conn ->
       Logger.log log_level(conn, opts), fn ->
         formatter = Keyword.get(opts, :formatter, Logster.StringFormatter)
-        renames = Keyword.get(opts, :renames, [])
+        renames = Keyword.get(opts, :renames, %{})
         stop_time = current_time()
         duration = time_diff(start_time, stop_time)
         []
@@ -55,14 +55,7 @@ defmodule Logster.Plugs.Logger do
   end
 
   defp put_field(keyword, default_key, renames, value) do
-    case Enum.find(renames, fn ({key, _new_key}) ->
-      key == default_key
-    end) do
-        {_default_key, new_key} ->
-          Keyword.put(keyword, new_key, value)
-        nil ->
-          Keyword.put(keyword, default_key, value)
-    end
+    Keyword.put(keyword, Map.get(renames, default_key, default_key), value)
   end
 
   defp headers(_, []), do: []

@@ -120,10 +120,10 @@ Logger.metadata(%{user_id: "123", foo: "bar"})
 
 ### Renaming default fields
 
-You can rename the default keys passing a list of `{:key, :new_key}` tuples:
+You can rename the default keys passing a map like `%{key: :new_key}`:
 
 ```elixir
-plug Logster.Plugs.Logger, renames: [{:duration, :response_time}, {:params, :parameters}]
+plug Logster.Plugs.Logger, renames: %{duration: :response_time, params: :parameters}
 ```
 It will log the following:
 ```
