@@ -110,12 +110,47 @@ That means your log messages will be formatted thusly:
 ```
 *Caution:* There is no guarantee that what reaches your console will be valid JSON. The Elixir `Logger` module has its own formatting which may be appended to your message. See the [Logger documentation](http://elixir-lang.org/docs/stable/logger/Logger.html) for more information.
 
-### Adding custom metadata
+### Including additional data in the logs
 
 Custom metadata can be added using `Logger.metadata` such as:
 
 ```elixir
 Logger.metadata(%{user_id: "123", foo: "bar"})
+```
+
+The easiest way to do this app wide is to introduce a new plug which you can include in your phoenix router pipeline.
+
+For example:
+
+```elixir
+defmodule HelloPhoenix.SetLoggerMetadata do
+  def init(opts), do: opts
+
+  def call(conn, _opts) do
+    Logger.metadata user_id: get_user_id(conn),
+                    remote_ip: format_ip(conn)
+    conn
+  end
+
+  defp format_ip(%{remote_ip: remote_ip}) when remote_ip != nil, do: remote_ip |> Tuple.to_list |> Enum.join(".")
+  defp format_ip(_), do: nil
+
+  defp get_user_id(%{assigns: %{current_user: %{id: id}}}), do: id
+  defp get_user_id(_), do: nil
+end
+```
+
+And then add this plug to the relevant pipelines in the router:
+
+```elixir
+pipeline :browser do
+  plug :fetch_session
+  plug :fetch_flash
+  plug :put_secure_browser_headers
+  # ...
+  plug HelloPhoenix.SetLoggerMetadata
+  # ...
+end
 ```
 
 ### Renaming default fields
