@@ -1,3 +1,7 @@
+# 0.8.0
+
+- Handles case when params are not fetched, such as when logging static assets
+
 # 0.7.0
 
 - [#13](https://github.com/navinpeiris/logster/pull/13) Ability to rename the fields being logged. Thanks to @pbrudnick
