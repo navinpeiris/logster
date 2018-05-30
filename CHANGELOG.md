@@ -1,10 +1,14 @@
+# 0.7.0
+
+- [#13](https://github.com/navinpeiris/logster/pull/13) Ability to rename the fields being logged. Thanks to @pbrudnick
+
 # 0.6.0
 
 - Fixes issue where all strings were getting url encoded in log output
 
 # 0.5.0
 
-- Fixes issue where an exception was thrown when params contains `%` [#10](https://github.com/navinpeiris/logster/issues/10). Thanks to @tsubery
+- [#10](https://github.com/navinpeiris/logster/issues/10) Fixes issue where an exception was thrown when params contains `%` . Thanks to @tsubery
 
 # 0.4.0
 
