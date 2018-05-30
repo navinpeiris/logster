@@ -81,6 +81,7 @@ defmodule Logster.Plugs.Logger do
   end
   defp formatted_phoenix_info(_), do: []
 
+  defp get_params(%{params: _params = %Plug.Conn.Unfetched{}}), do: %{}
   defp get_params(%{params: params}) do
     params
     |> do_filter_params(Application.get_env(:logster, :filter_parameters, @default_filter_parameters))

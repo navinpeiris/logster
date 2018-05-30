@@ -20,6 +20,17 @@ defmodule Logster.Plugs.LoggerTest do
     end
   end
 
+  defmodule MyUnfetchedParamsPlug do
+    use Plug.Builder
+
+    plug Logster.Plugs.Logger
+    plug :passthrough
+
+    defp passthrough(conn, _) do
+      Plug.Conn.send_resp(conn, 200, "Passthrough")
+    end
+  end
+
   defp call(conn) do
     capture_log fn -> MyPlug.call(conn, []) end
   end
@@ -177,8 +188,7 @@ defmodule Logster.Plugs.LoggerTest do
 
   test "logs chunked if chunked reply" do
     {_, message} = capture_log(fn ->
-       conn(:get, "/hello/world")
-       |> MyChunkedPlug.call([])
+       conn(:get, "/hello/world") |> MyChunkedPlug.call([])
     end)
 
     assert message =~ "state=set_chunked"
@@ -190,6 +200,14 @@ defmodule Logster.Plugs.LoggerTest do
     end
 
     assert message =~ "Logster.Plugs.LoggerTest.MyHaltingPlug halted in :halter/2"
+  end
+
+  test "does not log params if the params are not fetched" do
+    {_, message} = capture_log(fn ->
+      conn(:get, "/hello/world") |> MyUnfetchedParamsPlug.call([])
+    end)
+
+    assert message =~ "params={}"
   end
 
   test "logs to json with the JSONFormatter" do
