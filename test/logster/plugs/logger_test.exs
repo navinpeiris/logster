@@ -177,7 +177,7 @@ defmodule Logster.Plugs.LoggerTest do
        conn(:get, "/hello/world") |> MyChunkedPlug.call([])
     end)
 
-    assert message =~ "state=chunked"
+    assert message =~ "state=set_chunked"
   end
 
   test "logs halted connections if :log_on_halt is true" do
