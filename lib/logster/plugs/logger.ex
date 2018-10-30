@@ -17,6 +17,10 @@ defmodule Logster.Plugs.Logger do
 
     * `:log` - The log level at which this plug should log its request info.
       Default is `:info`.
+    * `:formatter` - The formatter module to use, has to implement `format/1`.
+      Default is `Logster.StringFormatter`.
+    * `:renames` - Map of fields to rename, for example: `%{status: :mystatus}`.
+    * `:excludes` - List of fields to exclude from the log, for example: `[:params]`.
   """
 
   require Logger
@@ -48,6 +52,7 @@ defmodule Logster.Plugs.Logger do
         |> put_field(:state, renames, conn.state)
         |> Keyword.merge(headers(conn.req_headers, Application.get_env(:logster, :allowed_headers, @default_allowed_headers)))
         |> Keyword.merge(Logger.metadata())
+        |> exclude(Keyword.get(opts, :excludes, []))
         |> formatter.format
       end
       conn
@@ -65,6 +70,10 @@ defmodule Logster.Plugs.Logger do
     |> Enum.into(%{}, fn {k,v} -> {k,v} end)
 
     [{:headers, map}]
+  end
+
+  defp exclude(keyword, excludes) do
+    Keyword.drop(keyword, excludes)
   end
 
   defp current_time, do: :erlang.monotonic_time
