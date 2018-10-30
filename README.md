@@ -165,6 +165,18 @@ It will log the following:
 [info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show parameters={"id":"some-article"} status=200 response_time=0.402 state=set
 ```
 
+### Excluding fields
+
+You can exclude fields with `:excludes`:
+
+```elixir
+plug Logster.Plugs.Logger, excludes: [:params, :status, :state]
+```
+It will log the following:
+```
+[info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show duration=0.402
+```
+
 #### Writing your own formatter
 
 To write your own formatter, all that is required is a module which defines a `format/1` function, which accepts a keyword list and returns a string.

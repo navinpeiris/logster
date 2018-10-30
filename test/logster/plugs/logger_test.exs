@@ -97,6 +97,18 @@ defmodule Logster.Plugs.LoggerTest do
     end
   end
 
+  defmodule MyExcludeFieldsPlug do
+    use Plug.Builder
+
+    plug Logster.Plugs.Logger,
+      excludes: [:params]
+    plug :passthrough
+
+    defp passthrough(conn, _) do
+      Plug.Conn.send_resp(conn, 200, "Passthrough")
+    end
+  end
+
   defmodule MyCustomLogMetadata do
     use Plug.Builder
 
@@ -243,6 +255,14 @@ defmodule Logster.Plugs.LoggerTest do
 
     assert message =~ "mystatus=200"
     assert message =~ ~r/responsetime=\d+.\d{3}/u
+  end
+
+  test "excluding fields" do
+    {_conn, message} = capture_log fn ->
+      conn(:get, "/foo") |> MyExcludeFieldsPlug.call([])
+    end
+
+    refute message =~ "params={}"
   end
 
   test "[TextFormatter] log headers: no default headers, no output" do
