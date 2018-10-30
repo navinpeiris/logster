@@ -108,7 +108,7 @@ defmodule Logster.Plugs.LoggerTest do
     plug :passthrough
 
     defp passthrough(conn, _) do
-      Logger.metadata(%{custom_metadata: "OK"})
+      Logger.metadata(custom_metadata: "OK")
       Plug.Conn.send_resp(conn, 200, "Passthrough")
     end
   end
