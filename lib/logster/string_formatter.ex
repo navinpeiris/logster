@@ -9,19 +9,8 @@ defmodule Logster.StringFormatter do
     [to_string(key), "=", format_value(value)]
   end
 
-  defp format_value(value) when is_binary(value) do
-    value
-  end
-
-  defp format_value(value) when is_float(value) do
-    :erlang.float_to_binary(value, decimals: 3)
-  end
-
-  defp format_value(value) when is_atom(value) or is_integer(value) do
-    to_string(value)
-  end
-
-  defp format_value(value) when is_map(value) do
-    Poison.encode!(value)
-  end
+  defp format_value(value) when is_binary(value), do: value
+  defp format_value(value) when is_float(value), do: :erlang.float_to_binary(value, decimals: 3)
+  defp format_value(value) when is_atom(value) or is_integer(value), do: to_string(value)
+  defp format_value(value) when is_map(value), do: Jason.encode!(value)
 end

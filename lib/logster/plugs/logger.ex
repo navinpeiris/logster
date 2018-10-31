@@ -118,8 +118,8 @@ defmodule Logster.Plugs.Logger do
     |> do_format_values
   end
 
-  def do_filter_params(%{__struct__: mod} = struct, _params_to_filter) when is_atom(mod),
-    do: struct
+  def do_filter_params(%{__struct__: mod} = struct, params_to_filter) when is_atom(mod),
+    do: do_filter_params(Map.from_struct(struct), params_to_filter)
 
   def do_filter_params(%{} = map, params_to_filter) do
     Enum.into(map, %{}, fn {k, v} ->

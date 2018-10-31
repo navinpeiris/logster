@@ -13,7 +13,7 @@ defmodule Logster.Plugs.LoggerTest do
     plug Plug.Parsers,
       parsers: [:urlencoded, :multipart, :json],
       pass: ["*/*"],
-      json_decoder: Poison
+      json_decoder: Jason
 
     plug :passthrough
 
@@ -52,7 +52,7 @@ defmodule Logster.Plugs.LoggerTest do
     plug Plug.Parsers,
       parsers: [:urlencoded, :multipart, :json],
       pass: ["*/*"],
-      json_decoder: Poison
+      json_decoder: Jason
 
     plug :passthrough
 
@@ -78,7 +78,7 @@ defmodule Logster.Plugs.LoggerTest do
     plug Plug.Parsers,
       parsers: [:urlencoded, :multipart, :json],
       pass: ["*/*"],
-      json_decoder: Poison
+      json_decoder: Jason
 
     plug :passthrough
 
@@ -96,7 +96,7 @@ defmodule Logster.Plugs.LoggerTest do
     plug Plug.Parsers,
       parsers: [:urlencoded, :multipart, :json],
       pass: ["*/*"],
-      json_decoder: Poison
+      json_decoder: Jason
 
     plug :passthrough
 
@@ -126,7 +126,7 @@ defmodule Logster.Plugs.LoggerTest do
     plug Plug.Parsers,
       parsers: [:urlencoded, :multipart, :json],
       pass: ["*/*"],
-      json_decoder: Poison
+      json_decoder: Jason
 
     plug :passthrough
 
@@ -186,7 +186,7 @@ defmodule Logster.Plugs.LoggerTest do
       |> call
 
     assert message =~
-             ~s(params={"upload":{"path":null,"filename":"blah.png","content_type":"image/png"})
+             ~s(params={"upload":{"content_type":"image/png","filename":"blah.png","path":null})
   end
 
   test "logs phoenix related attributes if present" do
@@ -254,7 +254,7 @@ defmodule Logster.Plugs.LoggerTest do
       |> String.split()
       |> Enum.at(3)
 
-    decoded = Poison.decode!(json)
+    decoded = Jason.decode!(json)
 
     assert %{"path" => "/good"} = decoded
 
@@ -316,7 +316,7 @@ defmodule Logster.Plugs.LoggerTest do
       |> String.split()
       |> Enum.at(3)
 
-    refute Poison.decode!(json)[:headers]
+    refute Jason.decode!(json)[:headers]
   end
 
   test "[TextFormatter] log headers: test values" do
@@ -346,7 +346,7 @@ defmodule Logster.Plugs.LoggerTest do
       |> String.split()
       |> Enum.at(3)
 
-    headers = Poison.decode!(json)["headers"]
+    headers = Jason.decode!(json)["headers"]
 
     assert headers["my-header-one"] == "test-value-1"
 
