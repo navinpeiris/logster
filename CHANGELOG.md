@@ -1,3 +1,8 @@
+# 0.9.0
+
+- [#15](https://github.com/navinpeiris/logster/pull/15) Adds `:excludes` option. Thanks to @ericmj
+- Uses `Jason` instead of `Poison` internally for formatting
+
 # 0.8.0
 
 - Handles case when params are not fetched, such as when logging static assets
