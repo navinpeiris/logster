@@ -3,7 +3,6 @@
 [![Build Status](https://travis-ci.org/navinpeiris/logster.svg?branch=master)](https://travis-ci.org/navinpeiris/logster)
 [![Hex version](https://img.shields.io/hexpm/v/logster.svg "Hex version")](https://hex.pm/packages/logster)
 [![Hex downloads](https://img.shields.io/hexpm/dt/logster.svg "Hex downloads")](https://hex.pm/packages/logster)
-[![Deps Status](https://beta.hexfaktor.org/badge/all/github/navinpeiris/logster.svg)](https://beta.hexfaktor.org/github/navinpeiris/logster)
 [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org)
 
 An easy to parse, one line logger for Elixir Plug.Conn and Phoenix, inspired by [lograge](https://github.com/roidrage/lograge).
@@ -27,15 +26,7 @@ First, add Logster to your `mix.exs` dependencies:
 
 ```elixir
 def deps do
-  [{:logster, "~> 0.4"}]
-end
-```
-
-and add it to your list of applications:
-
-```elixir
-def application() do
-  [applications: [:logster]]
+  [{:logster, "~> 0.8"}]
 end
 ```
 
