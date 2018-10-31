@@ -1,5 +1,4 @@
 defmodule Logster.StringFormatter do
-
   def format(params) do
     params
     |> Enum.map(&format_field/1)
@@ -15,7 +14,7 @@ defmodule Logster.StringFormatter do
   end
 
   defp format_value(value) when is_float(value) do
-    :erlang.float_to_binary(value, [decimals: 3])
+    :erlang.float_to_binary(value, decimals: 3)
   end
 
   defp format_value(value) when is_atom(value) or is_integer(value) do
@@ -23,6 +22,6 @@ defmodule Logster.StringFormatter do
   end
 
   defp format_value(value) when is_map(value) do
-    Poison.encode! value
+    Poison.encode!(value)
   end
 end
