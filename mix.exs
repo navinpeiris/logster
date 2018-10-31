@@ -15,7 +15,9 @@ defmodule Logster.Mixfile do
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      docs: [extras: ["README.md"]]
+      aliases: aliases(),
+      docs: [extras: ["README.md"]],
+      preferred_cli_env: [ci: :test]
     ]
   end
 
@@ -41,6 +43,17 @@ defmodule Logster.Mixfile do
       maintainers: ["Navin Peiris"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/navinpeiris/logster"}
+    ]
+  end
+
+  defp aliases do
+    [
+      ci: [
+        "compile --warnings-as-errors --force",
+        "format --check-formatted",
+        "test --raise",
+        "credo"
+      ]
     ]
   end
 end

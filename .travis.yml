@@ -14,6 +14,4 @@ notifications:
   email: false
 
 script:
-  - mix compile --warnings-as-errors
-  - mix format --check-formatted
-  - mix test
+  - mix ci

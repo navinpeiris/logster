@@ -181,7 +181,15 @@ It will log the following:
 
 To write your own formatter, all that is required is a module which defines a `format/1` function, which accepts a keyword list and returns a string.
 
-### License
+## Development
+
+Use the following mix task before pushing commits to run the same checks that are run in CI:
+
+```
+mix ci
+```
+
+## License
 
 The MIT License
 
