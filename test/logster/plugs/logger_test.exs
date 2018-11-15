@@ -33,6 +33,22 @@ defmodule Logster.Plugs.LoggerTest do
     end
   end
 
+  defmodule MyStruct do
+    defstruct name: "John", age: 27
+  end
+
+  defmodule MyStructParamsPlug do
+    use Plug.Builder
+
+    plug Logster.Plugs.Logger
+    plug :passthrough
+
+    defp passthrough(conn, _) do
+      conn = %{conn | params: %MyStruct{}}
+      Plug.Conn.send_resp(conn, 200, "Passthrough")
+    end
+  end
+
   defp call(conn) do
     capture_log(fn -> MyPlug.call(conn, []) end)
   end
@@ -232,6 +248,15 @@ defmodule Logster.Plugs.LoggerTest do
       end)
 
     assert message =~ "Logster.Plugs.LoggerTest.MyHaltingPlug halted in :halter/2"
+  end
+
+  test "logs params even when they are structs" do
+    {_, message} =
+      capture_log(fn ->
+        conn(:get, "/hello/world") |> MyStructParamsPlug.call([])
+      end)
+
+    assert message =~ "params={\"age\":27,\"name\":\"John\"}"
   end
 
   test "does not log params if the params are not fetched" do
