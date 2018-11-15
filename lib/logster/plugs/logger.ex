@@ -136,6 +136,8 @@ defmodule Logster.Plugs.Logger do
 
   def do_filter_params(other, _params_to_filter), do: other
 
+  def do_format_values(%_{} = params), do: params |> Map.from_struct() |> do_format_values()
+
   def do_format_values(%{} = params), do: params |> Enum.into(%{}, &do_format_value/1)
 
   def do_format_value({key, value}) when is_binary(value) do
