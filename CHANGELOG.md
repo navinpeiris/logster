@@ -1,3 +1,7 @@
+# 0.10.0
+
+- [#16](https://github.com/navinpeiris/logster/pull/16) Support for when struct params, providing compatibility with [Open API Spex](https://github.com/open-api-spex/open_api_spex). Thanks to @juantascon
+
 # 0.9.0
 
 - [#15](https://github.com/navinpeiris/logster/pull/15) Adds `:excludes` option. Thanks to @ericmj
