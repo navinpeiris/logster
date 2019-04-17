@@ -101,12 +101,18 @@ That means your log messages will be formatted thusly:
 ```
 *Caution:* There is no guarantee that what reaches your console will be valid JSON. The Elixir `Logger` module has its own formatting which may be appended to your message. See the [Logger documentation](http://elixir-lang.org/docs/stable/logger/Logger.html) for more information.
 
-### Including additional data in the logs
+### Metadata
 
-Custom metadata can be added using `Logger.metadata` such as:
+Custom metadata can be added to logs using `Logger.metadata` and configuring your logger backend:
 
 ```elixir
+# add metadata for all future logs from this process
 Logger.metadata(%{user_id: "123", foo: "bar"})
+
+# example for configuring console backend to include metadata in logs.
+# see https://hexdocs.pm/logger/Logger.html#module-console-backend documentation for more
+# config.exs
+config :logger, :console, metadata: [:user_id, :foo]
 ```
 
 The easiest way to do this app wide is to introduce a new plug which you can include in your phoenix router pipeline.
