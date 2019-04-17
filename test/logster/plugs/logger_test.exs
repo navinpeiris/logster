@@ -134,24 +134,6 @@ defmodule Logster.Plugs.LoggerTest do
     end
   end
 
-  defmodule MyCustomLogMetadata do
-    use Plug.Builder
-
-    plug Logster.Plugs.Logger
-
-    plug Plug.Parsers,
-      parsers: [:urlencoded, :multipart, :json],
-      pass: ["*/*"],
-      json_decoder: Jason
-
-    plug :passthrough
-
-    defp passthrough(conn, _) do
-      Logger.metadata(custom_metadata: "OK")
-      Plug.Conn.send_resp(conn, 200, "Passthrough")
-    end
-  end
-
   defp capture_log(fun) do
     data =
       capture_io(:user, fn ->
@@ -285,15 +267,6 @@ defmodule Logster.Plugs.LoggerTest do
 
     %{"duration" => duration} = decoded
     assert is_float(duration)
-  end
-
-  test "dump metadata into logs" do
-    {_conn, message} =
-      capture_log(fn ->
-        conn(:get, "/good") |> MyCustomLogMetadata.call([])
-      end)
-
-    assert message =~ "custom_metadata=OK"
   end
 
   test "renaming fields" do

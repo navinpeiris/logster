@@ -57,7 +57,6 @@ defmodule Logster.Plugs.Logger do
             Application.get_env(:logster, :allowed_headers, @default_allowed_headers)
           )
         )
-        |> Keyword.merge(Logger.metadata())
         |> exclude(Keyword.get(opts, :excludes, []))
         |> formatter.format
       end)
