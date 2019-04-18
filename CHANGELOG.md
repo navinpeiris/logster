@@ -1,3 +1,11 @@
+# 1.0.0
+
+- [#18](https://github.com/navinpeiris/logster/pull/18) Remove duplication of metadata in logs. Thanks to @novaugust
+
+### Breaking Changes
+
+- Any metadata that needs to be logged needs to now be setup in the `Logger` backend configuration. This is so that metadata configuration is centralised and so that there is no duplication of metadata in the logged output. See [Issue#17](https://github.com/navinpeiris/logster/issues/17) for more details.
+
 # 0.10.0
 
 - [#16](https://github.com/navinpeiris/logster/pull/16) Support for when struct params, providing compatibility with [Open API Spex](https://github.com/open-api-spex/open_api_spex). Thanks to @juantascon
