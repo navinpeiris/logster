@@ -129,7 +129,7 @@ defmodule HelloPhoenix.SetLoggerMetadata do
     conn
   end
 
-  defp format_ip(%{remote_ip: remote_ip}) when remote_ip != nil, do: remote_ip |> Tuple.to_list |> Enum.join(".")
+  defp format_ip(%{remote_ip: remote_ip}) when remote_ip != nil, do: :inet_parse.ntoa(remote_ip)
   defp format_ip(_), do: nil
 
   defp get_user_id(%{assigns: %{current_user: %{id: id}}}), do: id
