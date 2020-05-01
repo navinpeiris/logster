@@ -13,5 +13,5 @@ defmodule Logster.StringFormatter do
   defp format_value(value) when is_float(value), do: :erlang.float_to_binary(value, decimals: 3)
   defp format_value(value) when is_atom(value) or is_integer(value), do: to_string(value)
   defp format_value(value) when is_map(value), do: Jason.encode!(value)
-  defp format_value(_), do: "(unprintable)"
+  defp format_value(value), do: inspect(value)
 end
