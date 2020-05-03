@@ -171,9 +171,9 @@ defmodule Logster.Plugs.LoggerTest do
   end
 
   test "supports non-printable ascii params" do
-    {_conn, message} = conn(:get, "/?v=ok%85ok") |> call
+    {_conn, message} = conn(:get, "/?v=ok…ok") |> call
 
-    assert message =~ "ok%85ok"
+    assert message =~ "ok…ok"
   end
 
   test "logs file upload params" do
