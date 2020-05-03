@@ -1,3 +1,7 @@
+# 1.0.1
+
+- [#22](https://github.com/navinpeiris/logster/pull/22) Print inspect output for unexpected param values. Thanks to @rubysolo
+
 # 1.0.0
 
 - [#18](https://github.com/navinpeiris/logster/pull/18) Remove duplication of metadata in logs. Thanks to @novaugust
