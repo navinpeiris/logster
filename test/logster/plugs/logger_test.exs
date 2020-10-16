@@ -49,6 +49,18 @@ defmodule Logster.Plugs.LoggerTest do
     end
   end
 
+  defmodule MyMapNotJsonablePlug do
+    use Plug.Builder
+
+    plug Logster.Plugs.Logger
+    plug :passthrough
+
+    defp passthrough(conn, _) do
+      conn = %{conn | params: %{my_tuple: {27}}}
+      Plug.Conn.send_resp(conn, 200, "Passthrough")
+    end
+  end
+
   defp call(conn) do
     capture_log(fn -> MyPlug.call(conn, []) end)
   end
@@ -239,6 +251,15 @@ defmodule Logster.Plugs.LoggerTest do
       end)
 
     assert message =~ "params={\"age\":27,\"name\":\"John\"}"
+  end
+
+  test "logs params with inspect when a map is not encodeable as json" do
+    {_, message} =
+      capture_log(fn ->
+        conn(:get, "/hello/world") |> MyMapNotJsonablePlug.call([])
+      end)
+
+    assert message =~ "%{my_tuple: {27}}"
   end
 
   test "does not log params if the params are not fetched" do
