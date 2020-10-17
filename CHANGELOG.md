@@ -1,3 +1,7 @@
+# 1.0.2
+
+- [#23](https://github.com/navinpeiris/logster/pull/23) No longer raises an error if a map can not be encoded in JSON. Thanks to @paulanthonywilson
+
 # 1.0.1
 
 - [#22](https://github.com/navinpeiris/logster/pull/22) Print inspect output for unexpected param values. Thanks to @rubysolo
