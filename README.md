@@ -80,7 +80,7 @@ plug Logster.Plugs.ChangeLogLevel, to: :debug
 And to change it only for `index` and `show` actions:
 
 ```elixir
-plug Logster.Plugs.ChangeLogLevel, to: :debug when action in [:index, :show]
+plug Logster.Plugs.ChangeLogLevel, [to: :debug] when action in [:index, :show]
 ```
 
 This is specially useful for cases such as when you want to lower the log level for a healthcheck endpoint that gets hit every few seconds.
