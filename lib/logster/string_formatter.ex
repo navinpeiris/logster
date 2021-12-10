@@ -14,8 +14,8 @@ defmodule Logster.StringFormatter do
   defp format_value(value) when is_atom(value) or is_integer(value), do: to_string(value)
 
   defp format_value(value) when is_map(value) do
-    case Jason.encode(value) do
-      {:ok, json} -> json
+    case Jason.encode_to_iodata(value) do
+      {:ok, json_iodata} -> json_iodata
       {:error, _} -> inspect(value)
     end
   end
