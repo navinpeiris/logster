@@ -11,7 +11,7 @@ defmodule Logster.Mixfile do
       package: package(),
       source_url: "https://github.com/navinpeiris/logster",
       homepage_url: "https://github.com/navinpeiris/logster",
-      elixir: "~> 1.2",
+      elixir: "~> 1.9",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       deps: deps(),
