@@ -1,6 +1,6 @@
 defmodule Logster.Plugs.ChangeLogLevel do
   @moduledoc """
-    A plug for changing the log level used by Logster. Useful for increasing/descreasing the log level on a per controller or action basis
+    A plug for changing the log level used by Logster. Useful for increasing/decreasing the log level on a per controller or action basis
 
     To change the log level for a specific controller, add the following in the controller
 
