@@ -149,8 +149,9 @@ defmodule Logster.Plugs.Logger do
 
   def do_format_value(val), do: val
 
-  defp log_level(%{private: %{logster_log_level: logster_log_level}}, _opts),
-    do: logster_log_level
-
-  defp log_level(_, opts), do: Keyword.get(opts, :log, :info)
+  defp log_level(%{private: %{logster_log_level: log_level}}, _opts), do: log_level
+  defp log_level(_, log: log_level), do: log_level
+  defp log_level(%{status: status}, _opts) when status >= 500, do: :error
+  defp log_level(%{status: status}, _opts) when status >= 400, do: :warn
+  defp log_level(_, _opts), do: :info
 end
