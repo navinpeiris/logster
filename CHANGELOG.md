@@ -1,3 +1,7 @@
+# 1.1.0
+
+- By default logs responses with 5xx status code with error level and 4xx responses with warning level.
+
 # 1.0.2
 
 - [#23](https://github.com/navinpeiris/logster/pull/23) No longer raises an error if a map can not be encoded in JSON. Thanks to @paulanthonywilson
