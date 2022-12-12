@@ -142,7 +142,8 @@ defmodule Logster.Plugs.LoggerTest do
     |> put_private(:phoenix_format, "json")
   end
 
-  defp call_and_capture_log(conn, plug), do: capture_log(fn -> plug.call(conn, []) end)
+  defp call_and_capture_log(conn, plug),
+    do: capture_log([colors: [enabled: false]], fn -> plug.call(conn, []) end)
 
   test "logs proper message to console" do
     message = conn(:get, "/") |> call_and_capture_log(MyPlug)
@@ -251,7 +252,7 @@ defmodule Logster.Plugs.LoggerTest do
     json =
       message
       |> String.split()
-      |> Enum.at(3)
+      |> List.last()
 
     decoded = Jason.decode!(json)
 
@@ -296,7 +297,7 @@ defmodule Logster.Plugs.LoggerTest do
     json =
       message
       |> String.split()
-      |> Enum.at(3)
+      |> List.last()
 
     refute Jason.decode!(json)[:headers]
   end
@@ -324,7 +325,7 @@ defmodule Logster.Plugs.LoggerTest do
     json =
       message
       |> String.split()
-      |> Enum.at(3)
+      |> List.last()
 
     headers = Jason.decode!(json)["headers"]
 
