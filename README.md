@@ -1,6 +1,6 @@
 # Logster
 
-[![Build Status](https://travis-ci.org/navinpeiris/logster.svg?branch=master)](https://travis-ci.org/navinpeiris/logster)
+[![CI](https://github.com/navinpeiris/logster/actions/workflows/ci.yml/badge.svg)](https://github.com/navinpeiris/logster/actions/workflows/ci.yml)
 [![Hex version](https://img.shields.io/hexpm/v/logster.svg "Hex version")](https://hex.pm/packages/logster)
 [![Hex downloads](https://img.shields.io/hexpm/dt/logster.svg "Hex downloads")](https://hex.pm/packages/logster)
 [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org)
@@ -8,12 +8,14 @@
 An easy to parse, one line logger for Elixir Plug.Conn and Phoenix, inspired by [lograge](https://github.com/roidrage/lograge).
 
 With the default `Plug.Logger`, the log output for a request looks like:
+
 ```
 [info] GET /articles/some-article
 [info] Sent 200 in 21ms
 ```
 
 With Logster, we've got logging that's much easier to parse and search through, such as:
+
 ```
 [info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show params={"id":"some-article"} status=200 duration=0.402 state=set
 ```
@@ -26,7 +28,7 @@ First, add Logster to your `mix.exs` dependencies:
 
 ```elixir
 def deps do
-  [{:logster, "~> 1.0"}]
+  [{:logster, "~> 1.1"}]
 end
 ```
 
@@ -96,10 +98,12 @@ plug Logster.Plugs.Logger, formatter: Logster.JSONFormatter
 ```
 
 That means your log messages will be formatted thusly:
+
 ```
 {"status":200,"state":"set","path":"hello","params":{},"method":"GET","format":"json","duration":20.647,"controller":"App.HelloController","action":"show"
 ```
-*Caution:* There is no guarantee that what reaches your console will be valid JSON. The Elixir `Logger` module has its own formatting which may be appended to your message. See the [Logger documentation](http://elixir-lang.org/docs/stable/logger/Logger.html) for more information.
+
+_Caution:_ There is no guarantee that what reaches your console will be valid JSON. The Elixir `Logger` module has its own formatting which may be appended to your message. See the [Logger documentation](http://elixir-lang.org/docs/stable/logger/Logger.html) for more information.
 
 ### Metadata
 
@@ -157,7 +161,9 @@ You can rename the default keys passing a map like `%{key: :new_key}`:
 ```elixir
 plug Logster.Plugs.Logger, renames: %{duration: :response_time, params: :parameters}
 ```
+
 It will log the following:
+
 ```
 [info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show parameters={"id":"some-article"} status=200 response_time=0.402 state=set
 ```
@@ -169,7 +175,9 @@ You can exclude fields with `:excludes`:
 ```elixir
 plug Logster.Plugs.Logger, excludes: [:params, :status, :state]
 ```
+
 It will log the following:
+
 ```
 [info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show duration=0.402
 ```
