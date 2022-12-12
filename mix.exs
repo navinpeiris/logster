@@ -35,7 +35,7 @@ defmodule Logster.Mixfile do
       {:ex_doc, "~> 0.14", only: :dev},
       {:mix_test_watch, "~> 1.0", only: :dev},
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:ex_unit_notifier, "~> 0.1", only: :test}
+      {:ex_unit_notifier, "~> 1.2", only: :test}
     ]
   end
 
