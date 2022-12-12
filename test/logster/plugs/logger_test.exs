@@ -2,7 +2,7 @@ defmodule Logster.Plugs.LoggerTest do
   use ExUnit.Case
   use Plug.Test
 
-  import ExUnit.CaptureIO
+  import ExUnit.CaptureLog
   require Logger
 
   defmodule MyPlug do
@@ -59,17 +59,6 @@ defmodule Logster.Plugs.LoggerTest do
       conn = %{conn | params: %{my_tuple: {27}}}
       Plug.Conn.send_resp(conn, 200, "Passthrough")
     end
-  end
-
-  defp call(conn) do
-    capture_log(fn -> MyPlug.call(conn, []) end)
-  end
-
-  defp put_phoenix_privates(conn) do
-    conn
-    |> put_private(:phoenix_controller, Logster.Plugs.LoggerTest)
-    |> put_private(:phoenix_action, :show)
-    |> put_private(:phoenix_format, "json")
   end
 
   defmodule MyChunkedPlug do
@@ -146,18 +135,17 @@ defmodule Logster.Plugs.LoggerTest do
     end
   end
 
-  defp capture_log(fun) do
-    data =
-      capture_io(:user, fn ->
-        Process.put(:capture_log, fun.())
-        Logger.flush()
-      end)
-
-    {Process.get(:capture_log), data}
+  defp put_phoenix_privates(conn) do
+    conn
+    |> put_private(:phoenix_controller, Logster.Plugs.LoggerTest)
+    |> put_private(:phoenix_action, :show)
+    |> put_private(:phoenix_format, "json")
   end
 
+  defp call_and_capture_log(conn, plug), do: capture_log(fn -> plug.call(conn, []) end)
+
   test "logs proper message to console" do
-    {_conn, message} = conn(:get, "/") |> call
+    message = conn(:get, "/") |> call_and_capture_log(MyPlug)
 
     assert message =~ "method=GET"
     assert message =~ "path=/"
@@ -166,7 +154,7 @@ defmodule Logster.Plugs.LoggerTest do
     assert message =~ ~r/duration=\d+.\d{3}/u
     assert message =~ "state=set"
 
-    {_conn, message} = conn(:post, "/hello/world", foo: :bar) |> call
+    message = conn(:post, "/hello/world", foo: :bar) |> call_and_capture_log(MyPlug)
 
     assert message =~ "method=POST"
     assert message =~ "path=/hello/world"
@@ -177,30 +165,30 @@ defmodule Logster.Plugs.LoggerTest do
   end
 
   test "handles params with spaces" do
-    {_conn, message} = conn(:post, "/hello/world", foo: "one two three") |> call
+    message = conn(:post, "/hello/world", foo: "one two three") |> call_and_capture_log(MyPlug)
 
     assert message =~ ~s(params={"foo":"one two three"})
   end
 
   test "supports non-printable ascii params" do
-    {_conn, message} = conn(:get, "/?v=ok…ok") |> call
+    message = conn(:get, "/?v=ok…ok") |> call_and_capture_log(MyPlug)
 
     assert message =~ "ok…ok"
   end
 
   test "logs file upload params" do
-    {_conn, message} =
+    message =
       conn(:post, "/hello/world",
         upload: %Plug.Upload{content_type: "image/png", filename: "blah.png"}
       )
-      |> call
+      |> call_and_capture_log(MyPlug)
 
     assert message =~
              ~s(params={"upload":{"content_type":"image/png","filename":"blah.png","path":null})
   end
 
   test "logs phoenix related attributes if present" do
-    {_conn, message} = conn(:get, "/") |> call
+    message = conn(:get, "/") |> call_and_capture_log(MyPlug)
 
     assert message =~ "method=GET"
     assert message =~ "path=/"
@@ -211,15 +199,16 @@ defmodule Logster.Plugs.LoggerTest do
   end
 
   test "filters parameters from the log" do
-    {_conn, message} =
-      conn(:post, "/hello/world", password: :bar, foo: [password: :other]) |> call
+    message =
+      conn(:post, "/hello/world", password: :bar, foo: [password: :other])
+      |> call_and_capture_log(MyPlug)
 
     assert message =~ ~s("password":"[FILTERED]")
     assert message =~ ~s("foo":{"password":"[FILTERED]"})
   end
 
   test "logs paths with double slashes and trailing slash" do
-    {_conn, message} = conn(:get, "/hello/world") |> put_phoenix_privates |> call
+    message = conn(:get, "/hello/world") |> put_phoenix_privates |> call_and_capture_log(MyPlug)
 
     assert message =~ "format=json"
     assert message =~ "controller=Logster.Plugs.LoggerTest"
@@ -227,55 +216,37 @@ defmodule Logster.Plugs.LoggerTest do
   end
 
   test "logs chunked if chunked reply" do
-    {_, message} =
-      capture_log(fn ->
-        conn(:get, "/hello/world") |> MyChunkedPlug.call([])
-      end)
+    message = conn(:get, "/hello/world") |> call_and_capture_log(MyChunkedPlug)
 
     assert message =~ "state=set_chunked"
   end
 
   test "logs halted connections if :log_on_halt is true" do
-    {_conn, message} =
-      capture_log(fn ->
-        conn(:get, "/foo") |> MyHaltingPlug.call([])
-      end)
+    message = conn(:get, "/foo") |> call_and_capture_log(MyHaltingPlug)
 
     assert message =~ "Logster.Plugs.LoggerTest.MyHaltingPlug halted in :halter/2"
   end
 
   test "logs params even when they are structs" do
-    {_, message} =
-      capture_log(fn ->
-        conn(:get, "/hello/world") |> MyStructParamsPlug.call([])
-      end)
+    message = conn(:get, "/hello/world") |> call_and_capture_log(MyStructParamsPlug)
 
     assert message =~ "params={\"age\":27,\"name\":\"John\"}"
   end
 
   test "logs params with inspect when a map is not encodeable as json" do
-    {_, message} =
-      capture_log(fn ->
-        conn(:get, "/hello/world") |> MyMapNotJsonablePlug.call([])
-      end)
+    message = conn(:get, "/hello/world") |> call_and_capture_log(MyMapNotJsonablePlug)
 
     assert message =~ "%{my_tuple: {27}}"
   end
 
   test "does not log params if the params are not fetched" do
-    {_, message} =
-      capture_log(fn ->
-        conn(:get, "/hello/world") |> MyUnfetchedParamsPlug.call([])
-      end)
+    message = conn(:get, "/hello/world") |> call_and_capture_log(MyUnfetchedParamsPlug)
 
     assert message =~ "params={}"
   end
 
   test "logs to json with the JSONFormatter" do
-    {_conn, message} =
-      capture_log(fn ->
-        conn(:get, "/good") |> MyJSONPlug.call([])
-      end)
+    message = conn(:get, "/good") |> call_and_capture_log(MyJSONPlug)
 
     json =
       message
@@ -291,20 +262,14 @@ defmodule Logster.Plugs.LoggerTest do
   end
 
   test "renaming fields" do
-    {_conn, message} =
-      capture_log(fn ->
-        conn(:get, "/foo") |> MyRenameFieldsPlug.call([])
-      end)
+    message = conn(:get, "/foo") |> call_and_capture_log(MyRenameFieldsPlug)
 
     assert message =~ "mystatus=200"
     assert message =~ ~r/responsetime=\d+.\d{3}/u
   end
 
   test "excluding fields" do
-    {_conn, message} =
-      capture_log(fn ->
-        conn(:get, "/foo") |> MyExcludeFieldsPlug.call([])
-      end)
+    message = conn(:get, "/foo") |> call_and_capture_log(MyExcludeFieldsPlug)
 
     refute message =~ "params={}"
   end
@@ -312,10 +277,10 @@ defmodule Logster.Plugs.LoggerTest do
   test "[TextFormatter] log headers: no default headers, no output" do
     Application.put_env(:logster, :allowed_headers, [])
 
-    {_conn, message} =
+    message =
       conn(:post, "/hello/world", [])
       |> put_req_header("x-test-header", "test value")
-      |> call
+      |> call_and_capture_log(MyPlug)
 
     refute message =~ ~s(headers)
   end
@@ -323,12 +288,10 @@ defmodule Logster.Plugs.LoggerTest do
   test "[JSONFormatter] log headers: no default headers, no output" do
     Application.put_env(:logster, :allowed_headers, [])
 
-    {_conn, message} =
-      capture_log(fn ->
-        conn(:post, "/hello/world", [])
-        |> put_req_header("x-test-header", "test value")
-        |> MyJSONPlug.call([])
-      end)
+    message =
+      conn(:post, "/hello/world", [])
+      |> put_req_header("x-test-header", "test value")
+      |> call_and_capture_log(MyJSONPlug)
 
     json =
       message
@@ -341,10 +304,10 @@ defmodule Logster.Plugs.LoggerTest do
   test "[TextFormatter] log headers: test values" do
     Application.put_env(:logster, :allowed_headers, ["my-header-one", "my-header-two"])
 
-    {_conn, message} =
+    message =
       conn(:post, "/hello/world", [])
       |> put_req_header("my-header-one", "test-value-1")
-      |> call
+      |> call_and_capture_log(MyPlug)
 
     assert message =~ ~s("test-value-1")
   end
@@ -352,13 +315,11 @@ defmodule Logster.Plugs.LoggerTest do
   test "[JSONFormatter] log headers: test values" do
     Application.put_env(:logster, :allowed_headers, ["my-header-one", "my-header-two"])
 
-    {_conn, message} =
-      capture_log(fn ->
-        conn(:post, "/hello/world", [])
-        |> put_req_header("my-header-one", "test-value-1")
-        |> put_req_header("my-header-three", "test-value-3")
-        |> MyJSONPlug.call([])
-      end)
+    message =
+      conn(:post, "/hello/world", [])
+      |> put_req_header("my-header-one", "test-value-1")
+      |> put_req_header("my-header-three", "test-value-3")
+      |> call_and_capture_log(MyJSONPlug)
 
     json =
       message
