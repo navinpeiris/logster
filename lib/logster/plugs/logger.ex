@@ -152,6 +152,6 @@ defmodule Logster.Plugs.Logger do
   defp log_level(%{private: %{logster_log_level: log_level}}, _opts), do: log_level
   defp log_level(_, log: log_level), do: log_level
   defp log_level(%{status: status}, _opts) when status >= 500, do: :error
-  defp log_level(%{status: status}, _opts) when status >= 400, do: :warn
+  defp log_level(%{status: status}, _opts) when status >= 400, do: :warning
   defp log_level(_, _opts), do: :info
 end
