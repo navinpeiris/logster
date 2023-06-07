@@ -4,7 +4,7 @@ defmodule Logster.Mixfile do
   def project do
     [
       app: :logster,
-      version: "1.1.0",
+      version: "1.1.1",
       name: "Logster",
       description:
         "Easily parsable single-line plain text and JSON logger for Plug and Phoenix applications",
