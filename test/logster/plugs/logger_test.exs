@@ -185,7 +185,7 @@ defmodule Logster.Plugs.LoggerTest do
       |> call_and_capture_log(MyPlug)
 
     assert message =~
-             ~s(params={"upload":{"content_type":"image/png","filename":"blah.png","path":null})
+             ~s(params={"upload":{"filename":"blah.png","path":null,"content_type":"image/png"})
   end
 
   test "logs phoenix related attributes if present" do
@@ -231,7 +231,7 @@ defmodule Logster.Plugs.LoggerTest do
   test "logs params even when they are structs" do
     message = conn(:get, "/hello/world") |> call_and_capture_log(MyStructParamsPlug)
 
-    assert message =~ "params={\"age\":27,\"name\":\"John\"}"
+    assert message =~ ~s(params={"name":"John","age":27})
   end
 
   test "logs params with inspect when a map is not encodeable as json" do
