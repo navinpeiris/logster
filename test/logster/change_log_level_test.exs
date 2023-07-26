@@ -1,11 +1,11 @@
-defmodule Logster.Plugs.ChangeLogLevelTest do
+defmodule Logster.ChangeLogLevelTest do
   use ExUnit.Case
   import Plug.Test
 
   defmodule MyUpdatedLogLevelPlug do
     use Plug.Builder
 
-    plug Logster.Plugs.ChangeLogLevel, to: :error
+    plug Logster.ChangeLogLevel, to: :error
   end
 
   defmodule MyDefaultLogLevelPlug do

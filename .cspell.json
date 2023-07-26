@@ -1,0 +1,14 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "ignorePaths": [
+    "/.git/",
+    "/cover/",
+    "/deps/",
+    "/mix.lock"
+  ],
+  "words": [
+    "logfmt",
+    "loggable"
+  ]
+}

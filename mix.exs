@@ -12,14 +12,21 @@ defmodule Logster.Mixfile do
       source_url: "https://github.com/navinpeiris/logster",
       homepage_url: "https://github.com/navinpeiris/logster",
       elixir: "~> 1.9",
+      elixirc_paths: elixirc_paths(Mix.env()),
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: aliases(),
       docs: [extras: ["README.md"]],
+      test_coverage: [
+        summary: [threshold: 100]
+      ],
       preferred_cli_env: [ci: :test]
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   def application do
     [
@@ -53,7 +60,7 @@ defmodule Logster.Mixfile do
       ci: [
         "compile --warnings-as-errors --force",
         "format --check-formatted",
-        "test --raise",
+        "test --cover --raise",
         "credo"
       ]
     ]

@@ -1,3 +1,16 @@
+# 2.0.0
+
+## Changes
+
+- Attach with `Logster.attach_phoenix_logger()`
+- Changes to set option:
+  - state=set => state=sent <- TODO: NEED TESTS
+  - state=set_chunked => state=chunked <- TODO: NEED TESTS
+- allowed_headers changed to headers
+- renames from plug to config
+- formatter from plug to config
+- overriding status messages. Show how to show custom error levels for warning and error
+
 # 1.1.0
 
 - By default logs responses with 5xx status code with error level and 4xx responses with warning level.
