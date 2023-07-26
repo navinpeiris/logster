@@ -5,105 +5,224 @@
 [![Hex downloads](https://img.shields.io/hexpm/dt/logster.svg "Hex downloads")](https://hex.pm/packages/logster)
 [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org)
 
-An easy to parse, one line logger for Elixir Plug.Conn and Phoenix, inspired by [lograge](https://github.com/roidrage/lograge).
+> **Note**\
+> This is the documentation for v2 of Logster. If you're looking for v1, see the [v1 branch](https://github.com/navinpeiris/logster/tree/v1.x).
 
-With the default `Plug.Logger`, the log output for a request looks like:
+<!-- MDOC -->
+
+An easy-to-parse, single-line logger for Elixir Phoenix and Plug.Conn, inspired by [lograge](https://github.com/roidrage/lograge). Supports logfmt, JSON and custom output formatting.
+
+By default, Phoenix log output for a request looks similar to the following:
 
 ```
 [info] GET /articles/some-article
+[debug] Processing with HelloPhoenix.ArticleController.show/2
+  Parameters: %{"id" => "some-article"}
+  Pipelines: [:browser]
 [info] Sent 200 in 21ms
 ```
 
-With Logster, we've got logging that's much easier to parse and search through, such as:
+This can be handy for development, but cumbersome for production. The log output is spread across multiple lines, making it difficult to parse and search.
+
+Logster aims to solve this problem by logging the request in a single line:
 
 ```
-[info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show params={"id":"some-article"} status=200 duration=0.402 state=set
+[info] state=sent method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show params={"id":"some-article"} status=200 duration=0.402
 ```
 
-This becomes handy specially when integrating with log management services such as [Logentries](https://logentries.com/) or [Papertrail](https://papertrailapp.com/).
+This is especially handy when integrating with log management services such as [Logentries](https://logentries.com/) or [Papertrail](https://papertrailapp.com/).
+
+Alternatively, Logster can also output JSON formatted logs (see configuration section below):
+
+```
+[info] {"state":"sent","method":"GET","path":"/articles/some-article","format":"html","controller":"HelloPhoenix.ArticleController","action":"show","params":{"id":"some-article"},"status":200,"duration":0.402}
+```
 
 ## Installation
 
-First, add Logster to your `mix.exs` dependencies:
+Add `:logster` to the list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:logster, "~> 1.1"}]
+  [{:logster, "~> 2.0.0-rc.1"}]
 end
 ```
 
-Then, update your dependencies:
+## Upgrading
 
-```
-$ mix deps.get
-```
+See [Upgrade Guide](UPGRADE_GUIDE.md) for more information.
 
 ## Usage
 
-To use with a Phoenix application, replace `Plug.Logger` in the projects `endpoint.ex` file with `Logster.Plugs.Logger`:
+### Using with Phoenix
+
+Attach the Logster Phoenix logger in the `start` function in your project's `application.ex` file:
 
 ```elixir
-# plug Plug.Logger
-plug Logster.Plugs.Logger
+# lib/my_app/application.ex
+def start(_type, _args) do
+  children = [
+    # ...
+  ]
+
+  #
+  # Add the line below:
+  #
+  :ok = Logster.attach_phoenix_logger()
+
+  opts = [strategy: :one_for_one, name: MyApp.Supervisor]
+  Supervisor.start_link(children, opts)
+end
 ```
 
-To use it in as a plug, just add `plug Logster.Plugs.Logger` into the relevant module.
+Next, disable the default Phoenix logger by adding the following line to your `config.exs` file:
+
+```elixir
+config :phoenix, :logger, false
+```
+
+### Using with Plug
+
+Add `Logster.Plug` to your plug pipeline, or in the relevant module:
+
+```elixir
+plug Logster.Plug
+```
+
+### Using standalone logger
+
+Logster provides `debug`, `info`, `warning`, `error` etc convenience functions that mimic those provided by the elixir logger, which outputs messages in your chosen log format.
+
+For example:
+
+```elixir
+Logger.info(service: :payments, event: :received, amount: 1000, customer: 123)
+```
+
+will output the following to the logs:
+
+```
+[info] service=payments event=received amount=1000 customer=123
+```
+
+You can also provide a function to be called lazily, which will only be called if the log level is enabled:
+
+```elixir
+Logger.debug(fn ->
+  # some potentially expensive operation
+  # won't be called if the log level is not enabled
+  customer = get_customer_id()
+
+  [service: :payments, event: :received, amount: 1000, customer: customer]
+end)
+```
+
+## Configuration
+
+The following configuration options can be set through your `config.exs` file
+
+### Formatter
+
+#### JSON formatter
+
+```elixir
+config :logster, formatter: :json
+```
+
+_Caution:_ There is no guarantee that what reaches your console will be valid JSON. The Elixir `Logger` module has its own formatting which may be appended to your message. See the [Logger documentation](http://elixir-lang.org/docs/stable/logger/Logger.html) for more information.
+
+#### Custom formatter
+
+Provide a function that takes one argument, the parameters as input, and returns formatted output
+
+```elixir
+config :logster, formatter: &MyCustomFormatter.format/1
+```
 
 ### Filtering parameters
 
-By default, Logster filters parameters named `password`, and replaces the content with `[FILTERED]`.
+By default, Logster filters parameters named `password`.
 
-You can update the list of parameters that are filtered by adding the following to your configuration file:
+To change the filtered parameters:
 
 ```elixir
-config :logster, :filter_parameters, ["password", "secret", "token"]
+config :logster, filter_parameters: ["password", "secret", "token"]
 ```
 
-### HTTP headers support
+### Logging HTTP request headers
 
-By default, Logster won't parse and log HTTP headers.
-
-But you can update the list of headers that should be parsed and logged. The logged headers will be added under `headers`. Both plain text and JSON formatters are supported.
+By default, Logster won't log any request headers. To log specific headers, you can use the `:headers` option:
 
 ```elixir
-config :logster, :allowed_headers, ["my-header-one", "my-header-two"]
+config :logster, headers: ["my-header-one", "my-header-two"]
 ```
 
 ### Changing the log level for a specific controller/action
 
-To change the Logster log level for a specific controller and/or action, you use the `Logster.Plugs.ChangeLogLevel` plug.
+#### Through Logster.ChangeLogLevel plug
+
+To change the Logster log level for a specific controller and/or action, you use the `Logster.ChangeLogLevel` plug.
 
 For example, to change the logging of all requests in a controller to `debug`, add the following to that controller:
 
 ```elixir
-plug Logster.Plugs.ChangeLogLevel, to: :debug
+plug Logster.ChangeLogLevel, to: :debug
 ```
 
 And to change it only for `index` and `show` actions:
 
 ```elixir
-plug Logster.Plugs.ChangeLogLevel, [to: :debug] when action in [:index, :show]
+plug Logster.ChangeLogLevel, [to: :debug] when action in [:index, :show]
 ```
 
 This is specially useful for cases such as when you want to lower the log level for a healthcheck endpoint that gets hit every few seconds.
 
-### Changing the formatter
+#### Through endpoint configuration
 
-Logster allows you to use a different formatter to get your log lines looking just how you want. It comes with two built-in formatters: `Logster.StringFormatter` and `Logster.JSONFormatter`
+You can set the `Plug.Telemetry` `:log` option to a tuple, `{Mod, Fun, Args}`. `The Plug.Conn.t()` for the request will be prepended to the provided list of arguments.
 
-To use `Logster.JSONFormatter`, supply the `formatter` option when you use the `Logster.Plugs.Logger` plug:
+When invoked, your function must return a `Logger.level()` or `false` to disable logging for the request.
 
 ```elixir
-plug Logster.Plugs.Logger, formatter: Logster.JSONFormatter
+# lib/my_app_web/endpoint.ex
+plug Plug.Telemetry,
+  event_prefix: [:phoenix, :endpoint],
+  log: {__MODULE__, :log_level, []}
+
+# Disables logging for routes like /status/*
+def log_level(%{status: status}) when status >= 500, do: :error
+def log_level(%{status: status}) when status >= 400, do: :warning
+def log_level(%{path_info: ["status" | _]}), do: false
+def log_level(_), do: :info
 ```
 
-That means your log messages will be formatted thusly:
+### Renaming default fields
+
+You can rename the default keys passing a map like `%{key: :new_key}`:
+
+```elixir
+config :logster, renames: [duration: :response_time, params: :parameters]
+```
+
+Example output:
 
 ```
-{"status":200,"state":"set","path":"hello","params":{},"method":"GET","format":"json","duration":20.647,"controller":"App.HelloController","action":"show"
+[info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show parameters={"id":"some-article"} status=200 response_time=0.402 state=set
 ```
 
-_Caution:_ There is no guarantee that what reaches your console will be valid JSON. The Elixir `Logger` module has its own formatting which may be appended to your message. See the [Logger documentation](http://elixir-lang.org/docs/stable/logger/Logger.html) for more information.
+### Excluding fields
+
+You can exclude fields with `:excludes`:
+
+```elixir
+config :logster, excludes: [:params, :status, :state]
+```
+
+Example output:
+
+```
+[info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show duration=0.402
+```
 
 ### Metadata
 
@@ -119,7 +238,7 @@ Logger.metadata(%{user_id: "123", foo: "bar"})
 config :logger, :console, metadata: [:user_id, :foo]
 ```
 
-The easiest way to do this app wide is to introduce a new plug which you can include in your phoenix router pipeline.
+The easiest way to do this app wide is to introduce a new plug which you can include in your Phoenix router pipeline.
 
 For example:
 
@@ -154,37 +273,7 @@ pipeline :browser do
 end
 ```
 
-### Renaming default fields
-
-You can rename the default keys passing a map like `%{key: :new_key}`:
-
-```elixir
-plug Logster.Plugs.Logger, renames: %{duration: :response_time, params: :parameters}
-```
-
-It will log the following:
-
-```
-[info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show parameters={"id":"some-article"} status=200 response_time=0.402 state=set
-```
-
-### Excluding fields
-
-You can exclude fields with `:excludes`:
-
-```elixir
-plug Logster.Plugs.Logger, excludes: [:params, :status, :state]
-```
-
-It will log the following:
-
-```
-[info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show duration=0.402
-```
-
-#### Writing your own formatter
-
-To write your own formatter, all that is required is a module which defines a `format/1` function, which accepts a keyword list and returns a string.
+<!-- MDOC -->
 
 ## Development
 

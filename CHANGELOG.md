@@ -1,3 +1,22 @@
+# 2.0.0-rc.1
+
+- Introduce `Logster.attach_phoenix_logger/1`, which attaches a phoenix telemetry event listener for logging. This is the recommended way to use Logster with Phoenix.
+- Introduce `Logster.info/3`, `Logster.debug/3`, `Logster.warning/3`, `Logster.error/3` etc. These functions mimic those provided by the elixir logger, which outputs messages in your chosen log format.
+- Logs socket events.
+- Move all configuration options to be set through `config.exs`.
+- Rename `Logster.Plugs.Logger` to `Logster.Plug`.
+- Rename `Logster.Plugs.ChangeLogLevel` to `Logster.ChangeLogLevel`.
+- Rename `Logster.StringFormatter` to `Logster.Formatters.String`.
+- Rename `Logster.JSONFormatter` to `Logster.Formatters.JSON`.
+- Specify formatter using atoms instead of module:
+  - `formatter: :json`
+  - `formatter: :string`
+- Request state output in logs changed:
+  - `state=set` => `state=sent`
+  - `state=set_chunked` => `state=chunked`
+- Config option `allowed_headers` changed to `headers`.
+- Better `mix docs` output.
+
 # 1.1.0
 
 - By default logs responses with 5xx status code with error level and 4xx responses with warning level.

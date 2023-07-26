@@ -1,13 +1,16 @@
-defmodule Logster.StringFormatter do
-  def format(params) do
+defmodule Logster.Formatters.String do
+  def format(params) when is_list(params) do
     params
     |> Enum.map(&format_field/1)
     |> Enum.intersperse(?\s)
   end
 
-  defp format_field({key, value}) do
-    [to_string(key), "=", format_value(value)]
-  end
+  def format(params) when is_binary(params), do: params
+  def format(params), do: inspect(params)
+
+  defp format_field({key, value}), do: [to_string(key), "=", format_value(value)]
+
+  defp format_field(value), do: value
 
   defp format_value(value) when is_binary(value), do: value
   defp format_value(value) when is_float(value), do: :erlang.float_to_binary(value, decimals: 3)
