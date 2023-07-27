@@ -245,10 +245,12 @@ defmodule Logster do
     extra_fields
     |> maybe_put_headers(conn)
     |> Keyword.put(:status, conn.status)
+    |> maybe_put_query_params(conn)
     |> put_params(conn)
     |> maybe_put_phoenix_info(conn)
     |> Keyword.put(:path, conn.request_path)
     |> Keyword.put(:method, conn.method)
+    |> maybe_put_host(conn)
     |> Keyword.put(:state, format_state(conn.state))
     |> maybe_remove_excluded_fields()
     |> maybe_rename_fields()
@@ -256,6 +258,14 @@ defmodule Logster do
 
   defp format_state(:set_chunked), do: "chunked"
   defp format_state(_), do: "sent"
+
+  defp maybe_put_host(fields, %Plug.Conn{host: host}) do
+    if extra_fields() |> Enum.member?(:host) do
+      fields |> Keyword.put(:host, host)
+    else
+      fields
+    end
+  end
 
   defp maybe_put_phoenix_info(fields, %Plug.Conn{
          private: %{phoenix_controller: controller, phoenix_action: action}
@@ -279,6 +289,29 @@ defmodule Logster do
       |> format_values()
 
     fields |> Keyword.put(:params, params)
+  end
+
+  defp maybe_put_query_params(fields, conn) do
+    if extra_fields() |> Enum.member?(:query) do
+      fields |> do_put_query_params(conn)
+    else
+      fields
+    end
+  end
+
+  defp do_put_query_params(fields, %Plug.Conn{query_params: %Plug.Conn.Unfetched{}}),
+    do: fields |> Keyword.put(:query, "[UNFETCHED]")
+
+  defp do_put_query_params(fields, %Plug.Conn{query_params: query_params}),
+    do: do_put_query_params(fields, query_params)
+
+  defp do_put_query_params(fields, query_params) do
+    query_params =
+      query_params
+      |> filter_values()
+      |> format_values()
+
+    fields |> Keyword.put(:query, query_params)
   end
 
   # convenience method to put the params at the end of the given list
@@ -390,4 +423,6 @@ defmodule Logster do
     microseconds = duration |> System.convert_time_unit(:native, :microsecond)
     microseconds / 1000
   end
+
+  defp extra_fields, do: Application.get_env(:logster, :extra_fields, [])
 end

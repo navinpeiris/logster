@@ -196,6 +196,19 @@ def log_level(%{path_info: ["status" | _]}), do: false
 def log_level(_), do: :info
 ```
 
+### Enabling extra fields
+
+One or more of the following fields can be optionally enabled through the `extra_fields` configuration option:
+
+- host
+- query
+
+Example:
+
+```elixir
+config :logster, extra_fields: [:host, :query]
+```
+
 ### Renaming default fields
 
 You can rename the default keys passing a map like `%{key: :new_key}`:

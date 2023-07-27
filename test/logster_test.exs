@@ -766,6 +766,65 @@ defmodule Logster.Test do
       assert {:params, %{"v" => "ok…ok"}} in fields
     end
 
+    test "does not add query if not enabled in config" do
+      fields =
+        %Plug.Conn{
+          query_params: %{"foo" => "bar"}
+        }
+        |> Logster.get_conn_fields()
+
+      assert fields |> Keyword.has_key?(:query) == false
+    end
+
+    @tag with_config: [extra_fields: [:query]]
+    test "sets query params as unfetched when enabled in config" do
+      fields =
+        %Plug.Conn{
+          query_params: %Plug.Conn.Unfetched{}
+        }
+        |> Logster.get_conn_fields()
+
+      assert {:query, "[UNFETCHED]"} in fields
+    end
+
+    @tag with_config: [extra_fields: [:query]]
+    test "adds query params when enabled in config" do
+      fields =
+        %Plug.Conn{
+          query_params: %{
+            "one" => "two",
+            "foo" => "bar"
+          }
+        }
+        |> Logster.get_conn_fields()
+
+      assert {:query,
+              %{
+                "one" => "two",
+                "foo" => "bar"
+              }} in fields
+    end
+
+    @tag with_config: [extra_fields: [:query]]
+    test "filters password query params by default" do
+      fields =
+        %Plug.Conn{
+          query_params: %{
+            "one" => "two",
+            "password" => "should-not-show",
+            "secret" => "should-show"
+          }
+        }
+        |> Logster.get_conn_fields()
+
+      assert {:query,
+              %{
+                "one" => "two",
+                "password" => "[FILTERED]",
+                "secret" => "should-show"
+              }} in fields
+    end
+
     test "does not add headers by default" do
       fields =
         %Plug.Conn{
@@ -795,6 +854,20 @@ defmodule Logster.Test do
         |> Logster.get_conn_fields()
 
       assert {:headers, %{"host" => "example.com", "accept" => "text/html"}} in fields
+    end
+
+    @tag with_config: [extra_fields: [:host]]
+    test "includes host when enabled in config" do
+      fields =
+        %Plug.Conn{
+          state: :set,
+          method: "POST",
+          request_path: "/some/test/path",
+          status: 201
+        }
+        |> Logster.get_conn_fields()
+
+      assert {:host, "www.example.com"} in fields
     end
 
     @tag with_config: [excludes: [:params, :status, :state]]

@@ -1,6 +1,6 @@
 # Upgrade Guide
 
-## v1.x to v2.0.0-rc.1
+## v1.x to v2.0.0
 
 ### Phoenix users:
 

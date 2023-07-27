@@ -1,3 +1,7 @@
+# 2.0.0-rc.2
+
+- `extra_fields` configuration to optionally enable `host` and `query` params being logged.
+
 # 2.0.0-rc.1
 
 - Introduce `Logster.attach_phoenix_logger/1`, which attaches a phoenix telemetry event listener for logging. This is the recommended way to use Logster with Phoenix.
