@@ -201,26 +201,12 @@ def log_level(_), do: :info
 One or more of the following fields can be optionally enabled through the `extra_fields` configuration option:
 
 - host
-- query
+- query_params
 
 Example:
 
 ```elixir
-config :logster, extra_fields: [:host, :query]
-```
-
-### Renaming default fields
-
-You can rename the default keys passing a map like `%{key: :new_key}`:
-
-```elixir
-config :logster, renames: [duration: :response_time, params: :parameters]
-```
-
-Example output:
-
-```
-[info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show parameters={"id":"some-article"} status=200 response_time=0.402 state=set
+config :logster, extra_fields: [:host, :query_params]
 ```
 
 ### Excluding fields
@@ -235,6 +221,20 @@ Example output:
 
 ```
 [info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show duration=0.402
+```
+
+### Renaming default fields
+
+You can rename the default keys passing a map like `%{key: :new_key}`:
+
+```elixir
+config :logster, renames: [duration: :response_time, params: :parameters]
+```
+
+Example output:
+
+```
+[info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show parameters={"id":"some-article"} status=200 response_time=0.402 state=set
 ```
 
 ### Metadata

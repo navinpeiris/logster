@@ -766,17 +766,17 @@ defmodule Logster.Test do
       assert {:params, %{"v" => "ok…ok"}} in fields
     end
 
-    test "does not add query if not enabled in config" do
+    test "does not add query params if not enabled in config" do
       fields =
         %Plug.Conn{
           query_params: %{"foo" => "bar"}
         }
         |> Logster.get_conn_fields()
 
-      assert fields |> Keyword.has_key?(:query) == false
+      assert fields |> Keyword.has_key?(:query_params) == false
     end
 
-    @tag with_config: [extra_fields: [:query]]
+    @tag with_config: [extra_fields: [:query_params]]
     test "sets query params as unfetched when enabled in config" do
       fields =
         %Plug.Conn{
@@ -784,10 +784,10 @@ defmodule Logster.Test do
         }
         |> Logster.get_conn_fields()
 
-      assert {:query, "[UNFETCHED]"} in fields
+      assert {:query_params, "[UNFETCHED]"} in fields
     end
 
-    @tag with_config: [extra_fields: [:query]]
+    @tag with_config: [extra_fields: [:query_params]]
     test "adds query params when enabled in config" do
       fields =
         %Plug.Conn{
@@ -798,14 +798,14 @@ defmodule Logster.Test do
         }
         |> Logster.get_conn_fields()
 
-      assert {:query,
+      assert {:query_params,
               %{
                 "one" => "two",
                 "foo" => "bar"
               }} in fields
     end
 
-    @tag with_config: [extra_fields: [:query]]
+    @tag with_config: [extra_fields: [:query_params]]
     test "filters password query params by default" do
       fields =
         %Plug.Conn{
@@ -817,7 +817,7 @@ defmodule Logster.Test do
         }
         |> Logster.get_conn_fields()
 
-      assert {:query,
+      assert {:query_params,
               %{
                 "one" => "two",
                 "password" => "[FILTERED]",

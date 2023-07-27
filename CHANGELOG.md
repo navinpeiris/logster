@@ -1,6 +1,6 @@
-# 2.0.0-rc.2
+# 2.0.0-rc.3
 
-- `extra_fields` configuration to optionally enable `host` and `query` params being logged.
+- `extra_fields` configuration to optionally enable `host` and `query_params` params being logged.
 
 # 2.0.0-rc.1
 

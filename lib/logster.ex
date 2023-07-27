@@ -292,7 +292,7 @@ defmodule Logster do
   end
 
   defp maybe_put_query_params(fields, conn) do
-    if extra_fields() |> Enum.member?(:query) do
+    if extra_fields() |> Enum.member?(:query_params) do
       fields |> do_put_query_params(conn)
     else
       fields
@@ -300,7 +300,7 @@ defmodule Logster do
   end
 
   defp do_put_query_params(fields, %Plug.Conn{query_params: %Plug.Conn.Unfetched{}}),
-    do: fields |> Keyword.put(:query, "[UNFETCHED]")
+    do: fields |> Keyword.put(:query_params, "[UNFETCHED]")
 
   defp do_put_query_params(fields, %Plug.Conn{query_params: query_params}),
     do: do_put_query_params(fields, query_params)
@@ -311,7 +311,7 @@ defmodule Logster do
       |> filter_values()
       |> format_values()
 
-    fields |> Keyword.put(:query, query_params)
+    fields |> Keyword.put(:query_params, query_params)
   end
 
   # convenience method to put the params at the end of the given list
