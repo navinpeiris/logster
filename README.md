@@ -96,7 +96,7 @@ Logster provides `debug`, `info`, `warning`, `error` etc convenience functions t
 For example:
 
 ```elixir
-Logger.info(service: :payments, event: :received, amount: 1000, customer: 123)
+Logster.info(service: :payments, event: :received, amount: 1000, customer: 123)
 ```
 
 will output the following to the logs:
@@ -108,7 +108,7 @@ will output the following to the logs:
 You can also provide a function to be called lazily, which will only be called if the log level is enabled:
 
 ```elixir
-Logger.debug(fn ->
+Logster.debug(fn ->
   # some potentially expensive operation
   # won't be called if the log level is not enabled
   customer = get_customer_id()
