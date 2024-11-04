@@ -21,6 +21,26 @@ defmodule Logster.Formatters.StringTest do
     assert result == ~s(one=two foo=bar baz=123456 qux=123.457 xyz={"fi":"fo"} zzz={"one", "two"})
   end
 
+  test "can override the number of decimals for a string" do
+    old = Application.get_env(:logster, @formatter) || []
+
+    on_exit(fn ->
+      Application.put_env(:logster, @formatter, old)
+    end)
+
+    log = [bar: 123.4567]
+
+    Application.put_env(:logster, @formatter, Keyword.put(old, :decimals, 1))
+
+    result = log |> @formatter.format() |> IO.iodata_to_binary()
+    assert result == ~s(bar=123.5)
+
+    Application.put_env(:logster, @formatter, Keyword.put(old, :decimals, nil))
+
+    result = log |> @formatter.format() |> IO.iodata_to_binary()
+    assert result == ~s(bar=123.4567)
+  end
+
   test "formats field with a non-json convertible map" do
     result =
       [
