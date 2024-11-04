@@ -13,7 +13,21 @@ defmodule Logster.Formatters.String do
   defp format_field(value), do: value
 
   defp format_value(value) when is_binary(value), do: value
-  defp format_value(value) when is_float(value), do: :erlang.float_to_binary(value, decimals: 3)
+
+  defp format_value(value) when is_float(value) do
+    config =
+      Application.get_env(:logster, __MODULE__) || []
+
+    opts =
+      if decimals = Keyword.get(config, :decimals, 3) do
+        [decimals: decimals]
+      else
+        [:short]
+      end
+
+    :erlang.float_to_binary(value, opts)
+  end
+
   defp format_value(value) when is_atom(value) or is_integer(value), do: to_string(value)
 
   defp format_value(value) when is_map(value) do

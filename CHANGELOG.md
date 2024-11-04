@@ -1,3 +1,7 @@
+# Upcoming
+
+- allow overriding the number of decimals in float representation (`config :logster, Logster.Formatters.String, decimals: 5`)
+
 # 2.0.0-rc.3
 
 - `extra_fields` configuration to optionally enable `host` and `query_params` params being logged.
