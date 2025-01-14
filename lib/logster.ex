@@ -13,38 +13,9 @@ defmodule Logster do
   # Taken from `Logger` module
   @levels [:emergency, :alert, :critical, :error, :warning, :notice, :info, :debug]
 
-  @phoenix_handler_id {__MODULE__, :phoenix}
+  @type fields_or_message_or_func :: Keyword.t() | Logger.message() | (-> Keyword.t())
 
-  @doc """
-  Attaches a telemetry handler to the `:phoenix` event stream for logging.
-
-  Returns `:ok`.
-  """
-  @spec attach_phoenix_logger :: :ok
-  def attach_phoenix_logger do
-    events = [
-      [:phoenix, :endpoint, :stop],
-      [:phoenix, :socket_connected],
-      [:phoenix, :channel_joined],
-      [:phoenix, :channel_handled_in]
-    ]
-
-    :telemetry.attach_many(
-      @phoenix_handler_id,
-      events,
-      &__MODULE__.handle_phoenix_event/4,
-      :ok
-    )
-  end
-
-  @doc """
-  Detaches logster's telemetry handler from the `:phoenix` event stream.
-
-  Returns `:ok`.
-  """
-  @spec detach_phoenix_logger :: :ok
-  def detach_phoenix_logger, do: :telemetry.detach(@phoenix_handler_id)
-
+  @spec levels() :: list(Logger.level())
   def levels, do: @levels
 
   for level <- @levels do
@@ -53,7 +24,11 @@ defmodule Logster do
 
     Returns `:ok`.
     """
-    @spec unquote(level)(message :: Logger.message(), metadata :: Logger.metadata()) :: :ok
+    @spec unquote(level)(fields_or_message_or_func :: fields_or_message_or_func()) :: :ok
+    @spec unquote(level)(
+            fields_or_message_or_func :: fields_or_message_or_func(),
+            metadata :: Logger.metadata()
+          ) :: :ok
     def unquote(level)(fields_or_message_or_func, metadata \\ [])
 
     def unquote(level)(func, metadata) when is_function(func),
@@ -70,11 +45,6 @@ defmodule Logster do
 
   Returns `:ok`.
 
-  Using `debug/2`, `info/2`, `notice/2`, `warning/2`, `error/2`, `critical/2`, `alert/2`,
-  and `emergency/2` are preferred over this function as they can automatically eliminate
-  the call to `Logger` altogether at compile time if desired
-  (see the documentation for the `Logger` module).
-
   ## Example
 
   ```
@@ -87,11 +57,18 @@ defmodule Logster do
   16:54:29.919 [info] service=payment-processor event=start-processing customer=1234
   ```
   """
+
   @spec log(
           level :: Logger.level(),
-          message :: Logger.message(),
+          fields_or_message_or_func :: fields_or_message_or_func()
+        ) :: :ok
+
+  @spec log(
+          level :: Logger.level(),
+          fields_or_message_or_func :: fields_or_message_or_func(),
           metadata :: Logger.metadata()
         ) :: :ok
+
   def log(level, fields_or_message_or_func, metadata \\ [])
 
   for level <- @levels do
@@ -124,7 +101,7 @@ defmodule Logster do
   defp formatter(:string), do: Logster.Formatters.Logfmt
   defp formatter(:logfmt), do: Logster.Formatters.Logfmt
   defp formatter(:json), do: Logster.Formatters.JSON
-  defp formatter(other), do: other
+  defp formatter(module), do: module
 
   @doc false
   def log_level(_, %{private: %{logster_log_level: level}}), do: level
@@ -137,99 +114,6 @@ defmodule Logster do
 
   def log_level({mod, fun, args}, conn) when is_atom(mod) and is_atom(fun) and is_list(args) do
     apply(mod, fun, [conn | args])
-  end
-
-  @doc false
-  def handle_phoenix_event(
-        [:phoenix, :endpoint, :stop],
-        %{duration: duration},
-        %{conn: conn} = metadata,
-        _
-      ) do
-    case log_level(metadata[:options][:log], conn) do
-      false -> :ok
-      level -> log_conn(level, conn, duration)
-    end
-  end
-
-  @doc false
-  def handle_phoenix_event([:phoenix, :socket_connected], _, %{log: false}, _), do: :ok
-
-  @doc false
-  def handle_phoenix_event(
-        [:phoenix, :socket_connected],
-        %{duration: duration},
-        %{log: level} = meta,
-        _
-      ) do
-    log(level, fn ->
-      %{
-        transport: transport,
-        params: params,
-        user_socket: user_socket,
-        result: result,
-        serializer: serializer
-      } = meta
-
-      [
-        action: :connect,
-        state: result,
-        socket: inspect(user_socket),
-        duration: format_duration(duration),
-        transport: Atom.to_string(transport),
-        serializer: inspect(serializer)
-      ]
-      |> append_params(params)
-    end)
-  end
-
-  @doc false
-  def handle_phoenix_event(
-        [:phoenix, :channel_joined],
-        %{duration: duration},
-        %{socket: socket} = metadata,
-        _
-      ) do
-    channel_log(:log_join, socket, fn ->
-      %{result: result, params: params} = metadata
-
-      [
-        action: :join,
-        state: result,
-        topic: socket.topic,
-        duration: format_duration(duration)
-      ]
-      |> append_params(params)
-    end)
-  end
-
-  @doc false
-  def handle_phoenix_event(
-        [:phoenix, :channel_handled_in],
-        %{duration: duration},
-        %{socket: socket} = metadata,
-        _
-      ) do
-    channel_log(:log_handle_in, socket, fn ->
-      %{event: event, params: params} = metadata
-
-      [
-        action: :handled,
-        event: event,
-        topic: socket.topic,
-        channel: inspect(socket.channel),
-        duration: format_duration(duration)
-      ]
-      |> append_params(params)
-    end)
-  end
-
-  defp channel_log(_log_option, %{topic: "phoenix" <> _}, _fun), do: :ok
-
-  defp channel_log(log_option, %{private: private}, fun) do
-    if level = Map.get(private, log_option) do
-      log(level, fun)
-    end
   end
 
   @spec get_conn_fields(Plug.Conn.t(), keyword) :: list
@@ -420,4 +304,133 @@ defmodule Logster do
   end
 
   defp extra_fields, do: Application.get_env(:logster, :extra_fields, [])
+
+  #
+  # Phoenix
+  #
+
+  @phoenix_handler_id {__MODULE__, :phoenix}
+
+  @doc """
+  Attaches a telemetry handler to the `:phoenix` event stream for logging.
+
+  Returns `:ok`.
+  """
+  @spec attach_phoenix_logger :: :ok
+  def attach_phoenix_logger do
+    events = [
+      [:phoenix, :endpoint, :stop],
+      [:phoenix, :socket_connected],
+      [:phoenix, :channel_joined],
+      [:phoenix, :channel_handled_in]
+    ]
+
+    :telemetry.attach_many(
+      @phoenix_handler_id,
+      events,
+      &__MODULE__.handle_phoenix_event/4,
+      :ok
+    )
+  end
+
+  @doc """
+  Detaches logster's telemetry handler from the `:phoenix` event stream.
+
+  Returns `:ok`.
+  """
+  @spec detach_phoenix_logger :: :ok
+  def detach_phoenix_logger, do: :telemetry.detach(@phoenix_handler_id)
+
+  @doc false
+  def handle_phoenix_event(
+        [:phoenix, :endpoint, :stop],
+        %{duration: duration},
+        %{conn: conn} = metadata,
+        _
+      ) do
+    case log_level(metadata[:options][:log], conn) do
+      false -> :ok
+      level -> log_conn(level, conn, duration)
+    end
+  end
+
+  @doc false
+  def handle_phoenix_event([:phoenix, :socket_connected], _, %{log: false}, _), do: :ok
+
+  @doc false
+  def handle_phoenix_event(
+        [:phoenix, :socket_connected],
+        %{duration: duration},
+        %{log: level} = meta,
+        _
+      ) do
+    log(level, fn ->
+      %{
+        transport: transport,
+        params: params,
+        user_socket: user_socket,
+        result: result,
+        serializer: serializer
+      } = meta
+
+      [
+        action: :connect,
+        state: result,
+        socket: inspect(user_socket),
+        duration: format_duration(duration),
+        transport: Atom.to_string(transport),
+        serializer: inspect(serializer)
+      ]
+      |> append_params(params)
+    end)
+  end
+
+  @doc false
+  def handle_phoenix_event(
+        [:phoenix, :channel_joined],
+        %{duration: duration},
+        %{socket: socket} = metadata,
+        _
+      ) do
+    channel_log(:log_join, socket, fn ->
+      %{result: result, params: params} = metadata
+
+      [
+        action: :join,
+        state: result,
+        topic: socket.topic,
+        duration: format_duration(duration)
+      ]
+      |> append_params(params)
+    end)
+  end
+
+  @doc false
+  def handle_phoenix_event(
+        [:phoenix, :channel_handled_in],
+        %{duration: duration},
+        %{socket: socket} = metadata,
+        _
+      ) do
+    channel_log(:log_handle_in, socket, fn ->
+      %{event: event, params: params} = metadata
+
+      [
+        action: :handled,
+        event: event,
+        topic: socket.topic,
+        channel: inspect(socket.channel),
+        duration: format_duration(duration)
+      ]
+      |> append_params(params)
+    end)
+  end
+
+  defp channel_log(_log_option, %{topic: "phoenix" <> _}, _fun), do: :ok
+
+  defp channel_log(log_option, %{private: private}, fun) do
+    if level = Map.get(private, log_option) do
+      log(level, fun)
+    end
+  end
 end
