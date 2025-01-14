@@ -94,15 +94,9 @@ defmodule Logster do
         ) :: :ok
   def log(level, fields_or_message_or_func, metadata \\ [])
 
-  def log(level, func, metadata) when is_function(func),
-    do: Logger.log(level, fn -> formatter().format(func.()) end, metadata)
-
-  def log(level, fields_or_message, metadata) do
-    Logger.log(
-      level,
-      fn -> formatter().format(fields_or_message) end,
-      metadata
-    )
+  for level <- @levels do
+    def log(unquote(level), fields_or_message_or_func, metadata),
+      do: unquote(level)(fields_or_message_or_func, metadata)
   end
 
   @doc """
