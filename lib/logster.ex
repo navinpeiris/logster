@@ -120,8 +120,9 @@ defmodule Logster do
     )
   end
 
-  defp formatter(formatter \\ Application.get_env(:logster, :formatter, :string))
-  defp formatter(:string), do: Logster.Formatters.String
+  defp formatter(formatter \\ Application.get_env(:logster, :formatter, :logfmt))
+  defp formatter(:string), do: Logster.Formatters.Logfmt
+  defp formatter(:logfmt), do: Logster.Formatters.Logfmt
   defp formatter(:json), do: Logster.Formatters.JSON
   defp formatter(other), do: other
 

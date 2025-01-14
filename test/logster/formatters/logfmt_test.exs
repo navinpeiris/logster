@@ -1,7 +1,7 @@
-defmodule Logster.Formatters.StringTest do
+defmodule Logster.Formatters.LogfmtTest do
   use ExUnit.Case, async: true
 
-  @formatter Logster.Formatters.String
+  @formatter Logster.Formatters.Logfmt
 
   test "formats message when given keyword list" do
     result =

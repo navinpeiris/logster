@@ -94,7 +94,21 @@ defmodule Logster.Test do
   end
 
   describe "log/3 with formatter module given" do
-    @tag with_config: [formatter: Logster.Formatters.String]
+    @tag with_config: [formatter: Logster.Formatters.Logfmt]
+    test "logs formatted message when given a keyword list" do
+      message =
+        capture_log(fn ->
+          Logster.log(:info, [service: :payments, status: :processing, customer: "123"],
+            one: "two"
+          )
+        end)
+
+      assert message =~ "[info] service=payments status=processing customer=123"
+    end
+  end
+
+  describe "log/3 with deprecated string formatter option given" do
+    @tag with_config: [formatter: :string]
     test "logs formatted message when given a keyword list" do
       message =
         capture_log(fn ->

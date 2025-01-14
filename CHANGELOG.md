@@ -1,3 +1,8 @@
+# 2.0.0-rc.4
+
+- Rename `Logster.Formatters.String` to `Logster.Formatters.Logfmt`.
+- Change `formatter: :json` option to `formatter: :logfmt`.
+
 # 2.0.0-rc.3
 
 - `extra_fields` configuration to optionally enable `host` and `query_params` params being logged.

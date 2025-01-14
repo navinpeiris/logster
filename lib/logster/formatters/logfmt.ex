@@ -1,4 +1,4 @@
-defmodule Logster.Formatters.String do
+defmodule Logster.Formatters.Logfmt do
   def format(params) when is_list(params) do
     params
     |> Enum.map(&format_field/1)
