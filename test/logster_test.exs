@@ -176,11 +176,45 @@ defmodule Logster.Test do
 
       message =
         capture_log(fn ->
-          Logster.log_conn(:info, conn, 123_456, one: "two")
+          Logster.log_conn(conn, 123_456)
         end)
 
       assert message =~
                ~s([info] state=sent method=GET path=/hello/world params={"foo":"bar"} status=200 duration=0.123)
+    end
+
+    test "can specify log level through options" do
+      conn = %Plug.Conn{
+        method: "GET",
+        request_path: "/hello/world",
+        params: %{"foo" => "bar"},
+        status: 200
+      }
+
+      message =
+        capture_log(fn ->
+          Logster.log_conn(conn, 123_456, status_2xx_level: :warning)
+        end)
+
+      assert message =~
+               ~s([warning] state=sent method=GET path=/hello/world params={"foo":"bar"} status=200 duration=0.123)
+    end
+
+    test "logs conn without status" do
+      conn = %Plug.Conn{
+        method: "GET",
+        request_path: "/hello/world",
+        params: %{"foo" => "bar"},
+        status: nil
+      }
+
+      message =
+        capture_log(fn ->
+          Logster.log_conn(conn, 123_456)
+        end)
+
+      assert message =~
+               ~s([info] state=sent method=GET path=/hello/world params={"foo":"bar"} status= duration=0.123)
     end
   end
 
@@ -229,7 +263,7 @@ defmodule Logster.Test do
                ~s([info] state=sent method=GET path=/hello/world params={"foo":"bar"} status=301 duration=0.123)
     end
 
-    test "logs warning level message when the status is 4xx" do
+    test "logs warning level message by default when the status is 4xx" do
       conn = %Plug.Conn{
         method: "GET",
         request_path: "/hello/world",
@@ -246,7 +280,27 @@ defmodule Logster.Test do
                ~s([warning] state=sent method=GET path=/hello/world params={"foo":"bar"} status=400 duration=0.123)
     end
 
-    test "logs error level message when the status is 5xx" do
+    test "logs at specified level when the status is 4xx" do
+      conn = %Plug.Conn{
+        method: "GET",
+        request_path: "/hello/world",
+        params: %{"foo" => "bar"},
+        status: 400
+      }
+
+      message =
+        capture_log(fn ->
+          :telemetry.execute([:phoenix, :endpoint, :stop], %{duration: 123_456}, %{
+            conn: conn,
+            options: [status_4xx_level: :debug]
+          })
+        end)
+
+      assert message =~
+               ~s([debug] state=sent method=GET path=/hello/world params={"foo":"bar"} status=400 duration=0.123)
+    end
+
+    test "logs error level message by default when the status is 5xx" do
       conn = %Plug.Conn{
         method: "GET",
         request_path: "/hello/world",
@@ -261,6 +315,26 @@ defmodule Logster.Test do
 
       assert message =~
                ~s([error] state=sent method=GET path=/hello/world params={"foo":"bar"} status=500 duration=0.123)
+    end
+
+    test "logs specified error level message when the status is 5xx" do
+      conn = %Plug.Conn{
+        method: "GET",
+        request_path: "/hello/world",
+        params: %{"foo" => "bar"},
+        status: 500
+      }
+
+      message =
+        capture_log(fn ->
+          :telemetry.execute([:phoenix, :endpoint, :stop], %{duration: 123_456}, %{
+            conn: conn,
+            options: [status_5xx_level: :debug]
+          })
+        end)
+
+      assert message =~
+               ~s([debug] state=sent method=GET path=/hello/world params={"foo":"bar"} status=500 duration=0.123)
     end
 
     test "logs at given level when the log option is provided" do
@@ -499,7 +573,7 @@ defmodule Logster.Test do
     end
   end
 
-  describe "get_conn_fields/1" do
+  describe "get_conn_fields/2" do
     defmodule TestStruct do
       defstruct [:name, :password]
     end
@@ -546,12 +620,13 @@ defmodule Logster.Test do
           request_path: "/some/test/path",
           status: 201
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(33_000)
 
       assert {:state, "sent"} in fields
       assert {:method, "POST"} in fields
       assert {:path, "/some/test/path"} in fields
       assert {:status, 201} in fields
+      assert {:duration, 0.033} in fields
     end
 
     test "sets state to chunked when state is set_chunked" do
@@ -559,7 +634,7 @@ defmodule Logster.Test do
         %Plug.Conn{
           state: :set_chunked
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:state, "chunked"} in fields
     end
@@ -572,7 +647,7 @@ defmodule Logster.Test do
             :phoenix_action => :show
           }
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:controller, "Logster.TestController"} in fields
       assert {:action, "show"} in fields
@@ -583,7 +658,7 @@ defmodule Logster.Test do
         %Plug.Conn{
           params: %Plug.Conn.Unfetched{}
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:params, "[UNFETCHED]"} in fields
     end
@@ -596,7 +671,7 @@ defmodule Logster.Test do
             "foo" => "bar"
           }
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:params,
               %{
@@ -614,7 +689,7 @@ defmodule Logster.Test do
             "secret" => "should-show"
           }
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:params,
               %{
@@ -634,7 +709,7 @@ defmodule Logster.Test do
             "secret" => "should-show"
           }
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:params,
               %{
@@ -654,7 +729,7 @@ defmodule Logster.Test do
             "secret" => "should-not-show"
           }
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:params,
               %{
@@ -674,7 +749,7 @@ defmodule Logster.Test do
             "user" => %{"name" => "John", "password" => "should-not-show"}
           }
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:params,
               %{
@@ -690,7 +765,7 @@ defmodule Logster.Test do
         %Plug.Conn{
           params: test_filter_params()
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:params,
               %{
@@ -724,7 +799,7 @@ defmodule Logster.Test do
         %Plug.Conn{
           params: test_filter_params()
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:params,
               %{
@@ -763,7 +838,7 @@ defmodule Logster.Test do
             "tuple" => {"John", "pass"}
           }
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:params, %{"tuple" => {"John", "pass"}}} in fields
     end
@@ -775,7 +850,7 @@ defmodule Logster.Test do
             "v" => "ok…ok"
           }
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:params, %{"v" => "ok…ok"}} in fields
     end
@@ -785,7 +860,7 @@ defmodule Logster.Test do
         %Plug.Conn{
           query_params: %{"foo" => "bar"}
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert fields |> Keyword.has_key?(:query_params) == false
     end
@@ -796,7 +871,7 @@ defmodule Logster.Test do
         %Plug.Conn{
           query_params: %Plug.Conn.Unfetched{}
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:query_params, "[UNFETCHED]"} in fields
     end
@@ -810,7 +885,7 @@ defmodule Logster.Test do
             "foo" => "bar"
           }
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:query_params,
               %{
@@ -829,7 +904,7 @@ defmodule Logster.Test do
             "secret" => "should-show"
           }
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:query_params,
               %{
@@ -849,7 +924,7 @@ defmodule Logster.Test do
             {"accept", "text/html"}
           ]
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       refute fields |> Keyword.has_key?(:headers)
     end
@@ -865,7 +940,7 @@ defmodule Logster.Test do
             {"accept", "text/html"}
           ]
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:headers, %{"host" => "example.com", "accept" => "text/html"}} in fields
     end
@@ -879,7 +954,7 @@ defmodule Logster.Test do
           request_path: "/some/test/path",
           status: 201
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       assert {:host, "www.example.com"} in fields
     end
@@ -893,7 +968,7 @@ defmodule Logster.Test do
           request_path: "/some/test/path",
           status: 201
         }
-        |> Logster.get_conn_fields()
+        |> Logster.get_conn_fields(0)
 
       refute fields |> Keyword.has_key?(:params)
       refute fields |> Keyword.has_key?(:status)
@@ -901,6 +976,26 @@ defmodule Logster.Test do
 
       assert {:method, "POST"} in fields
       assert {:path, "/some/test/path"} in fields
+    end
+
+    @tag with_config: [
+           excludes: [:params, :status, :state, :action, :controller, :path, :method, :duration]
+         ]
+    test "can exclude all fields" do
+      fields =
+        %Plug.Conn{
+          state: :set,
+          method: "POST",
+          request_path: "/some/test/path",
+          status: 201,
+          private: %{
+            phoenix_action: :index,
+            phoenix_controller: TestController
+          }
+        }
+        |> Logster.get_conn_fields(0)
+
+      assert fields == []
     end
 
     @tag with_config: [renames: %{status: :mystatus, duration: :responsetime}]
@@ -912,13 +1007,13 @@ defmodule Logster.Test do
           request_path: "/some/test/path",
           status: 201
         }
-        |> Logster.get_conn_fields(duration: "0.123")
+        |> Logster.get_conn_fields(123_000)
 
       refute fields |> Keyword.has_key?(:status)
       refute fields |> Keyword.has_key?(:duration)
 
       assert {:mystatus, 201} in fields
-      assert {:responsetime, "0.123"} in fields
+      assert {:responsetime, 0.123} in fields
     end
   end
 end

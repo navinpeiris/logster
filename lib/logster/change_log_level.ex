@@ -13,7 +13,9 @@ defmodule Logster.ChangeLogLevel do
 
   import Plug.Conn
 
+  @spec init(Keyword.t()) :: Keyword.t()
   def init(opts), do: Keyword.get(opts, :to, :info)
 
-  def call(conn, log_level), do: conn |> put_private(:logster_log_level, log_level)
+  @spec call(Plug.Conn.t(), atom()) :: Plug.Conn.t()
+  def call(conn, log_level), do: conn |> put_private(:logster, log: log_level)
 end

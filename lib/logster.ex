@@ -77,23 +77,28 @@ defmodule Logster do
   end
 
   @doc """
-  Logs details about the given `conn` at the given `level`.
+  Logs details about the given `conn`
 
   See the module documentation for more information on configuration options.
 
   Returns `:ok`.
   """
-  @spec log_conn(
-          level :: Logger.level(),
-          conn :: Plug.Conn.t(),
-          duration_us :: integer(),
-          metadata :: Logger.metadata()
-        ) :: :ok
-  def log_conn(level, conn, duration_us, metadata \\ []) do
+  @spec log_conn(conn :: Plug.Conn.t(), duration_us :: integer()) :: :ok
+  @spec log_conn(conn :: Plug.Conn.t(), duration_us :: integer(), opts :: Keyword.t()) :: :ok
+
+  def log_conn(conn, duration_us, opts \\ [])
+
+  def log_conn(conn, duration_us, nil), do: log_conn(conn, duration_us, [])
+
+  def log_conn(conn, duration_us, opts),
+    do: do_log_conn(conn, duration_us, log_config(conn, opts))
+
+  defp do_log_conn(_conn, _duration_us, %{log: false}), do: :ok
+
+  defp do_log_conn(conn, duration_us, log_config) do
     log(
-      level,
-      fn -> conn |> get_conn_fields(duration: format_duration(duration_us)) end,
-      metadata
+      log_level(conn, log_config),
+      fn -> conn |> get_conn_fields(duration_us, log_config) end
     )
   end
 
@@ -103,121 +108,221 @@ defmodule Logster do
   defp formatter(:json), do: Logster.Formatters.JSON
   defp formatter(module), do: module
 
-  @doc false
-  def log_level(_, %{private: %{logster_log_level: level}}), do: level
+  defp log_config(conn, opts) do
+    conn_log_config =
+      conn
+      |> Map.get(:private, %{})
+      |> Map.get(:logster, [])
+      |> Enum.into(%{})
 
-  def log_level(nil, %{status: status}) when is_integer(status) and status >= 500, do: :error
-  def log_level(nil, %{status: status}) when is_integer(status) and status >= 400, do: :warning
-  def log_level(nil, _conn), do: :info
-
-  def log_level(level, _conn) when is_atom(level), do: level
-
-  def log_level({mod, fun, args}, conn) when is_atom(mod) and is_atom(fun) and is_list(args) do
-    apply(mod, fun, [conn | args])
+    %{
+      status_2xx_level: Application.get_env(:logster, :status_2xx_level, :info),
+      status_3xx_level: Application.get_env(:logster, :status_3xx_level, :info),
+      status_4xx_level: Application.get_env(:logster, :status_4xx_level, :warning),
+      status_5xx_level: Application.get_env(:logster, :status_5xx_level, :error),
+      headers: Application.get_env(:logster, :headers, []),
+      extra_fields: Application.get_env(:logster, :extra_fields, []),
+      excludes: Application.get_env(:logster, :excludes, []),
+      renames: Application.get_env(:logster, :renames, []),
+      filter_parameters:
+        Application.get_env(:logster, :filter_parameters, @default_filter_parameters)
+    }
+    |> Map.merge(conn_log_config)
+    |> Map.merge(opts |> Enum.into(%{}))
   end
 
-  @spec get_conn_fields(Plug.Conn.t(), keyword) :: list
+  defp log_level(_conn, %{log: level}) when is_atom(level), do: level
+
+  defp log_level(conn, %{log: {mod, fun, args}})
+       when is_atom(mod) and is_atom(fun) and is_list(args),
+       do: apply(mod, fun, [conn | args])
+
+  defp log_level(%{status: status}, %{status_5xx_level: level})
+       when is_integer(status) and status >= 500,
+       do: level
+
+  defp log_level(%{status: status}, %{status_4xx_level: level})
+       when is_integer(status) and status >= 400,
+       do: level
+
+  defp log_level(%{status: status}, %{status_3xx_level: level})
+       when is_integer(status) and status >= 300,
+       do: level
+
+  defp log_level(%{status: status}, %{status_2xx_level: level})
+       when is_integer(status) and status >= 200,
+       do: level
+
+  defp log_level(_conn, _log_config), do: :info
+
+  @spec get_conn_fields(conn :: Plug.Conn.t(), duration_us :: integer()) :: list
   @doc false
-  def get_conn_fields(%Plug.Conn{} = conn, extra_fields \\ []) do
+  def get_conn_fields(%Plug.Conn{} = conn, duration_us),
+    do: get_conn_fields(conn, duration_us, log_config(conn, []))
+
+  @doc false
+  defp get_conn_fields(%Plug.Conn{} = conn, duration_us, log_config) do
     # We use `Keyword.put` to add items to the list, which prepends items to the list, and so we
     # add items in reverse order of how we want them to appear in the log message.
-    extra_fields
-    |> maybe_put_headers(conn)
-    |> Keyword.put(:status, conn.status)
-    |> maybe_put_query_params(conn)
-    |> put_params(conn)
-    |> maybe_put_phoenix_info(conn)
-    |> Keyword.put(:path, conn.request_path)
-    |> Keyword.put(:method, conn.method)
-    |> maybe_put_host(conn)
-    |> Keyword.put(:state, format_state(conn.state))
-    |> maybe_remove_excluded_fields()
-    |> maybe_rename_fields()
+    []
+    |> maybe_put_duration(duration_us, log_config)
+    |> maybe_put_headers(conn, log_config)
+    |> maybe_put_status(conn, log_config)
+    |> maybe_put_query_params(conn, log_config)
+    |> maybe_put_params(conn, log_config)
+    |> maybe_put_phoenix_action(conn, log_config)
+    |> maybe_put_phoenix_controller(conn, log_config)
+    |> maybe_put_path(conn, log_config)
+    |> maybe_put_method(conn, log_config)
+    |> maybe_put_host(conn, log_config)
+    |> maybe_put_state(conn, log_config)
+    |> maybe_rename_fields(log_config)
   end
 
-  defp format_state(:set_chunked), do: "chunked"
-  defp format_state(_), do: "sent"
+  defp maybe_put_duration(fields, duration_us, %{excludes: excludes}) do
+    if :duration in excludes do
+      fields
+    else
+      fields |> Keyword.put(:duration, format_duration(duration_us))
+    end
+  end
 
-  defp maybe_put_host(fields, %Plug.Conn{host: host}) do
-    if extra_fields() |> Enum.member?(:host) do
+  defp format_duration(duration) do
+    microseconds = duration |> System.convert_time_unit(:native, :microsecond)
+    microseconds / 1000
+  end
+
+  defp maybe_put_headers(fields, _conn, %{headers: []}), do: fields
+
+  defp maybe_put_headers(fields, conn, %{headers: log_headers}) do
+    headers =
+      conn.req_headers
+      |> Enum.filter(fn {k, _} -> Enum.member?(log_headers, k) end)
+      |> Enum.into(%{}, fn {k, v} -> {k, v} end)
+
+    fields |> Keyword.put(:headers, headers)
+  end
+
+  defp maybe_put_status(fields, %{status: status}, %{excludes: excludes}) do
+    if :status in excludes do
+      fields
+    else
+      fields |> Keyword.put(:status, status)
+    end
+  end
+
+  defp maybe_put_query_params(fields, conn, %{extra_fields: extra_fields} = log_config) do
+    if :query_params in extra_fields do
+      fields |> do_put_query_params(conn, log_config)
+    else
+      fields
+    end
+  end
+
+  defp do_put_query_params(fields, %Plug.Conn{query_params: %Plug.Conn.Unfetched{}}, _log_config),
+    do: fields |> Keyword.put(:query_params, "[UNFETCHED]")
+
+  defp do_put_query_params(fields, %Plug.Conn{query_params: query_params}, log_config),
+    do: do_put_query_params(fields, query_params, log_config)
+
+  defp do_put_query_params(fields, query_params, log_config) do
+    query_params =
+      query_params
+      |> filter_values(log_config)
+      |> format_values()
+
+    fields |> Keyword.put(:query_params, query_params)
+  end
+
+  defp maybe_put_params(fields, conn, %{excludes: excludes} = log_config) do
+    if :params in excludes do
+      fields
+    else
+      fields |> do_put_params(conn, log_config)
+    end
+  end
+
+  defp do_put_params(fields, %Plug.Conn{params: %Plug.Conn.Unfetched{}}, _log_config),
+    do: fields |> Keyword.put(:params, "[UNFETCHED]")
+
+  defp do_put_params(fields, %Plug.Conn{params: params}, log_config),
+    do: do_put_params(fields, params, log_config)
+
+  defp do_put_params(fields, params, log_config) do
+    params =
+      params
+      |> filter_values(log_config)
+      |> format_values()
+
+    fields |> Keyword.put(:params, params)
+  end
+
+  defp maybe_put_phoenix_action(fields, %Plug.Conn{private: %{phoenix_action: action}}, %{
+         excludes: excludes
+       }) do
+    if :action in excludes do
+      fields
+    else
+      fields |> Keyword.put(:action, Atom.to_string(action))
+    end
+  end
+
+  defp maybe_put_phoenix_action(fields, _, _), do: fields
+
+  defp maybe_put_phoenix_controller(
+         fields,
+         %Plug.Conn{private: %{phoenix_controller: controller}},
+         %{
+           excludes: excludes
+         }
+       ) do
+    if :controller in excludes do
+      fields
+    else
+      fields |> Keyword.put(:controller, inspect(controller))
+    end
+  end
+
+  defp maybe_put_phoenix_controller(fields, _, _), do: fields
+
+  defp maybe_put_path(fields, %Plug.Conn{request_path: path}, %{excludes: excludes}) do
+    if :path in excludes do
+      fields
+    else
+      fields |> Keyword.put(:path, path)
+    end
+  end
+
+  defp maybe_put_method(fields, %Plug.Conn{method: method}, %{excludes: excludes}) do
+    if :method in excludes do
+      fields
+    else
+      fields |> Keyword.put(:method, method)
+    end
+  end
+
+  defp maybe_put_host(fields, %Plug.Conn{host: host}, %{extra_fields: extra_fields}) do
+    if :host in extra_fields do
       fields |> Keyword.put(:host, host)
     else
       fields
     end
   end
 
-  defp maybe_put_phoenix_info(fields, %Plug.Conn{
-         private: %{phoenix_controller: controller, phoenix_action: action}
-       }) do
-    fields
-    |> Keyword.put(:action, Atom.to_string(action))
-    |> Keyword.put(:controller, inspect(controller))
-  end
-
-  defp maybe_put_phoenix_info(fields, _), do: fields
-
-  defp put_params(fields, %Plug.Conn{params: %Plug.Conn.Unfetched{}}),
-    do: fields |> Keyword.put(:params, "[UNFETCHED]")
-
-  defp put_params(fields, %Plug.Conn{params: params}), do: put_params(fields, params)
-
-  defp put_params(fields, params) do
-    params =
-      params
-      |> filter_values()
-      |> format_values()
-
-    fields |> Keyword.put(:params, params)
-  end
-
-  defp maybe_put_query_params(fields, conn) do
-    if extra_fields() |> Enum.member?(:query_params) do
-      fields |> do_put_query_params(conn)
-    else
+  defp maybe_put_state(fields, %Plug.Conn{state: state}, %{excludes: excludes}) do
+    if :state in excludes do
       fields
+    else
+      fields |> Keyword.put(:state, format_state(state))
     end
   end
 
-  defp do_put_query_params(fields, %Plug.Conn{query_params: %Plug.Conn.Unfetched{}}),
-    do: fields |> Keyword.put(:query_params, "[UNFETCHED]")
+  defp format_state(:set_chunked), do: "chunked"
+  defp format_state(_), do: "sent"
 
-  defp do_put_query_params(fields, %Plug.Conn{query_params: query_params}),
-    do: do_put_query_params(fields, query_params)
+  defp maybe_rename_fields(fields, %{renames: []}), do: fields
 
-  defp do_put_query_params(fields, query_params) do
-    query_params =
-      query_params
-      |> filter_values()
-      |> format_values()
-
-    fields |> Keyword.put(:query_params, query_params)
-  end
-
-  # convenience method to put the params at the end of the given list
-  defp append_params(fields, params), do: fields ++ put_params([], params)
-
-  defp maybe_put_headers(fields, conn),
-    do: do_maybe_put_headers(fields, conn, Application.get_env(:logster, :headers, []))
-
-  defp do_maybe_put_headers(fields, _conn, []), do: fields
-
-  defp do_maybe_put_headers(fields, conn, loggable_headers) do
-    headers =
-      conn.req_headers
-      |> Enum.filter(fn {k, _} -> Enum.member?(loggable_headers, k) end)
-      |> Enum.into(%{}, fn {k, v} -> {k, v} end)
-
-    fields |> Keyword.put(:headers, headers)
-  end
-
-  defp maybe_remove_excluded_fields(fields),
-    do: fields |> Keyword.drop(Application.get_env(:logster, :excludes, []))
-
-  defp maybe_rename_fields(params, renames \\ Application.get_env(:logster, :renames, []))
-
-  defp maybe_rename_fields(fields, []), do: fields
-
-  defp maybe_rename_fields(fields, renames) do
+  defp maybe_rename_fields(fields, %{renames: renames}) do
     renames_map = renames |> Enum.into(%{})
 
     fields
@@ -230,20 +335,14 @@ defmodule Logster do
     end)
   end
 
-  defp filter_values(
-         params,
-         filter_config \\ Application.get_env(
-           :logster,
-           :filter_parameters,
-           @default_filter_parameters
-         )
-       )
+  defp filter_values(params, %{filter_parameters: filter_parameters}),
+    do: do_filter_values(params, filter_parameters)
 
-  defp filter_values(params, {:discard, discard_params}),
+  defp do_filter_values(params, {:discard, discard_params}),
     do: discard_values(params, discard_params)
 
-  defp filter_values(params, {:keep, keep_params}), do: keep_values(params, keep_params)
-  defp filter_values(params, filtered_params), do: discard_values(params, filtered_params)
+  defp do_filter_values(params, {:keep, keep_params}), do: keep_values(params, keep_params)
+  defp do_filter_values(params, filtered_params), do: discard_values(params, filtered_params)
 
   defp discard_values(%{__struct__: mod} = struct, filter_config) when is_atom(mod) do
     struct
@@ -280,9 +379,7 @@ defmodule Logster do
     end)
   end
 
-  defp keep_values([_ | _] = list, keep_params) do
-    Enum.map(list, &keep_values(&1, keep_params))
-  end
+  defp keep_values([_ | _] = list, keep_params), do: Enum.map(list, &keep_values(&1, keep_params))
 
   defp keep_values(_other, _keep_params), do: "[FILTERED]"
 
@@ -297,13 +394,6 @@ defmodule Logster do
   end
 
   defp format_value(val), do: val
-
-  defp format_duration(duration) do
-    microseconds = duration |> System.convert_time_unit(:native, :microsecond)
-    microseconds / 1000
-  end
-
-  defp extra_fields, do: Application.get_env(:logster, :extra_fields, [])
 
   #
   # Phoenix
@@ -347,12 +437,8 @@ defmodule Logster do
         %{duration: duration},
         %{conn: conn} = metadata,
         _
-      ) do
-    case log_level(metadata[:options][:log], conn) do
-      false -> :ok
-      level -> log_conn(level, conn, duration)
-    end
-  end
+      ),
+      do: conn |> log_conn(duration, metadata[:options])
 
   @doc false
   def handle_phoenix_event([:phoenix, :socket_connected], _, %{log: false}, _), do: :ok
@@ -433,4 +519,7 @@ defmodule Logster do
       log(level, fun)
     end
   end
+
+  defp append_params(fields, params),
+    do: fields ++ maybe_put_params([], params, log_config(%{}, []))
 end

@@ -26,9 +26,9 @@ defmodule Logster.Plug do
       duration = :erlang.monotonic_time() - start_time
 
       Logster.log_conn(
-        Logster.log_level(opts[:log], conn),
         conn,
-        duration
+        duration,
+        opts
       )
 
       conn

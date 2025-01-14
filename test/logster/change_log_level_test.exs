@@ -21,7 +21,7 @@ defmodule Logster.ChangeLogLevelTest do
   test "sets the log level in the conn if a level is specified" do
     conn = conn(:get, "/") |> MyUpdatedLogLevelPlug.call([])
 
-    assert conn.private.logster_log_level == :error
+    assert conn.private.logster == [log: :error]
   end
 
   test "does not set the log level in the conn if the plug is not specified" do
