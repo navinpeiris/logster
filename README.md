@@ -8,9 +8,9 @@
 > **Note**\
 > This is the documentation for v2 of Logster. If you're looking for v1, see the [v1 branch](https://github.com/navinpeiris/logster/tree/v1.x).
 
-<!-- MDOC -->
-
 An easy-to-parse, single-line logger for Elixir Phoenix and Plug applications. Supports logfmt, JSON and custom formatting.
+
+### Motivation
 
 By default, the Phoenix log output for a request looks like:
 
@@ -38,6 +38,10 @@ Alternatively, Logster can also output JSON formatted logs (see configuration se
 [info] {"state":"sent","method":"GET","path":"/articles/some-article","format":"html","controller":"HelloPhoenix.ArticleController","action":"show","params":{"id":"some-article"},"status":200,"duration":0.402}
 ```
 
+## Migrating from v1.x to v2.x
+
+See [Migration Guide](MIGRATION_GUIDE.md) for more information on migrating from v1.x to v2.x.
+
 ## Installation
 
 Add `:logster` to the list of dependencies in `mix.exs`:
@@ -47,10 +51,6 @@ def deps do
   [{:logster, "~> 2.0.0-rc.1"}]
 end
 ```
-
-## Migrating from v1.x to v2.x
-
-See [Migration Guide](MIGRATION_GUIDE.md) for more information on migrating from v1.x to v2.x.
 
 ## Usage
 
@@ -218,7 +218,7 @@ Example output:
 
 ### Renaming default fields
 
-You can rename the default keys passing a map like `%{key: :new_key}`:
+You can rename the default keys passing a keyword list like:
 
 ```elixir
 config :logster, renames: [duration: :response_time, params: :parameters]
