@@ -377,7 +377,7 @@ defmodule Logster.Test do
                ~s([debug] state=sent method=GET path=/hello/world params={"foo":"bar"} status=200 duration=0.123)
     end
 
-    test "logs at given level when change log level plug is called" do
+    test "logs at given level when change config plug is called" do
       conn =
         %Plug.Conn{
           method: "GET",
@@ -385,7 +385,7 @@ defmodule Logster.Test do
           params: %{"foo" => "bar"},
           status: 200
         }
-        |> Logster.ChangeLogLevel.call(Logster.ChangeLogLevel.init(to: :warning))
+        |> Logster.ChangeConfig.call(Logster.ChangeConfig.init(status_2xx_level: :warning))
 
       message =
         capture_log(fn ->
