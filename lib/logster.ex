@@ -1,10 +1,9 @@
 defmodule Logster do
-  @external_resource readme = Path.join([__DIR__, "../README.md"])
+  @moduledoc """
+  Single line, easy to parse logs for Elixir Phoenix and Plug applications.
 
-  @moduledoc readme
-             |> File.read!()
-             |> String.split("<!-- MDOC -->")
-             |> Enum.fetch!(1)
+  See the [README](README.md) for more information and configuration options.
+  """
 
   require Logger
 

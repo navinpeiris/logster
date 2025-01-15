@@ -1,7 +1,9 @@
 # 2.0.0-rc.4
 
 - Rename `Logster.Formatters.String` to `Logster.Formatters.Logfmt`.
-- Change `formatter: :json` option to `formatter: :logfmt`.
+- Change `formatter: :string` option to `formatter: :logfmt`.
+- Introduce `Logster.ChangeConfig` plug to change configuration options per request.
+- Add `status_2xx_level`, `status_3xx_level`, `status_4xx_level`, `status_5xx_level` configuration options to change the log level for different status groups.
 
 # 2.0.0-rc.3
 

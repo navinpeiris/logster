@@ -1,4 +1,4 @@
-# Upgrade Guide
+# Migration Guide
 
 ## v1.x to v2.0.0
 
@@ -46,7 +46,7 @@
 
 4. Remove the line installing `Logster.Plugs.Logger` from your `endpoint.ex` file.
 
-5. Locate any calls to `Logster.Plugs.ChangeLogLevel` and rename it to `Logster.ChangeLogLevel`
+5. Locate any calls to `Logster.Plugs.ChangeLogLevel` and use `Logster.ChangeConfig` plug instead.
 
 6. Add the following to `config.exs` to disable the default Phoenix logger:
 
@@ -60,4 +60,4 @@
 
 1. Locate any calls to `Logster.Plugs.Logger` and rename it to `Logster.Plug`
 
-1. Locate any calls to `Logster.Plugs.ChangeLogLevel` and rename it to `Logster.ChangeLogLevel`
+1. Locate any calls to `Logster.Plugs.ChangeLogLevel` and use `Logster.CHangeConfig` instead.
