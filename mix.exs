@@ -1,27 +1,26 @@
 defmodule Logster.MixProject do
   use Mix.Project
 
+  @version "2.0.0-rc.3"
+  @source_url "https://github.com/navinpeiris/logster"
+
   def project do
     [
       app: :logster,
-      version: "2.0.0-rc.3",
+      version: @version,
       name: "Logster",
       description:
         "Easily parsable single-line plain text and JSON logger for Plug and Phoenix applications",
       package: package(),
-      source_url: "https://github.com/navinpeiris/logster",
-      homepage_url: "https://github.com/navinpeiris/logster",
+      source_url: @source_url,
+      homepage_url: @source_url,
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: aliases(),
-      docs: [
-        main: "Logster",
-        api_reference: false,
-        extras: ["UPGRADE_GUIDE.md"]
-      ],
+      docs: docs(),
       test_coverage: [
         summary: [threshold: 100]
       ],
@@ -55,7 +54,19 @@ defmodule Logster.MixProject do
       files: ["lib", "mix.exs", "README*", "LICENSE*"],
       maintainers: ["Navin Peiris"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/navinpeiris/logster"}
+      links: %{"GitHub" => @source_url}
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      source_url: @source_url,
+      source_ref: "v#{@version}",
+      extras: [
+        "README.md",
+        "MIGRATION_GUIDE.md"
+      ]
     ]
   end
 

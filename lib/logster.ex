@@ -2,7 +2,7 @@ defmodule Logster do
   @moduledoc """
   Single line, easy to parse logs for Elixir Phoenix and Plug applications.
 
-  See the [README](README.md) for more information and configuration options.
+  See the project [README](https://github.com/navinpeiris/logster) for more details.
   """
 
   require Logger

@@ -60,4 +60,4 @@
 
 1. Locate any calls to `Logster.Plugs.Logger` and rename it to `Logster.Plug`
 
-1. Locate any calls to `Logster.Plugs.ChangeLogLevel` and use `Logster.CHangeConfig` instead.
+1. Locate any calls to `Logster.Plugs.ChangeLogLevel` and use `Logster.ChangeConfig` instead.

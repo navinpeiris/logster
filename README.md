@@ -10,7 +10,7 @@
 
 An easy-to-parse, single-line logger for Elixir Phoenix and Plug applications. Supports logfmt, JSON and custom formatting.
 
-### Motivation
+## Motivation
 
 By default, the Phoenix log output for a request looks like:
 
@@ -299,7 +299,7 @@ mix ci
 
 ## Acknowledgements
 
-This library is was inspired by the ruby [lograge](https://github.com/roidrage/lograge) gem.
+This library was inspired by the ruby [lograge](https://github.com/roidrage/lograge) gem.
 
 ## License
 
