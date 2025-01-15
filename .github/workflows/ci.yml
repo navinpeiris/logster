@@ -13,22 +13,26 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Erlang & Elixir
+        id: beam
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.15.4"
-          otp-version: "26.0.2"
+          elixir-version: "1.18.1"
+          otp-version: "27.2"
 
-      - name: Retrieve Mix Cache
-        uses: actions/cache@v3
-        id: mix-cache
+      - name: Restore mix cache
+        uses: buildjet/cache@v4
         with:
-          path: |
-            deps
-            _build
-          key: ${{ hashFiles('mix.lock') }}-v1
+          path: deps
+          key: mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
+
+      - name: Restore build cache
+        uses: buildjet/cache@v4
+        with:
+          path: _build
+          key: build-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
 
       - name: Install Mix Dependencies
         run: mix deps.get
@@ -36,5 +40,5 @@ jobs:
       - name: Compile Mix Dependencies
         run: mix deps.compile
 
-      - name: Run Tests
+      - name: Run Verification Tasks
         run: mix ci
