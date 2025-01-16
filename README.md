@@ -181,6 +181,26 @@ config :logster,
   status_5xx_level: :error  # default: :error
 ```
 
+### Fine grained log level configuration
+
+You can specify a function to be called to determine the log level for each request.
+
+This function will be called with the `conn`, and expects a logger level, or `false` to not log the request as return value.
+
+```elixir
+# config/config.exs
+config :logster, log: {MyLoggingModule, :log_level, []}
+```
+
+```elixir
+defmodule MyLoggingModule do
+  def log_level(%{status: status}) when status >= 500, do: :error
+  def log_level(%{status: status}) when status >= 400, do: :warning
+  def log_level(%{path_info: ["status" | _]}), do: false
+  def log_level(_), do: :info
+end
+```
+
 ### Request headers
 
 By default, Logster won't log any request headers. To log specific headers, you can use the `:headers` option:
