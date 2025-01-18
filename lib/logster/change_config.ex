@@ -8,14 +8,14 @@ defmodule Logster.ChangeConfig do
 
   To specify it only for a specific action, add the following:
 
-      plug Logster.ChangeConfig, status_2xx_level: :debug when action in [:index, :show]
+      plug Logster.ChangeConfig, [status_2xx_level: :debug] when action in [:index, :show]
   """
 
   import Plug.Conn
 
-  @spec init(Keyword.t()) :: Keyword.t()
+  @spec init(Plug.opts()) :: Plug.opts()
   def init(opts), do: opts
 
-  @spec call(Plug.Conn.t(), atom()) :: Plug.Conn.t()
+  @spec call(Plug.Conn.t(), Plug.opts()) :: Plug.Conn.t()
   def call(conn, opts), do: conn |> put_private(:logster, opts)
 end

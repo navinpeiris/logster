@@ -139,6 +139,12 @@ You can then customize each option on a request basis by passing them as options
 plug Logster.ChangeConfig, status_2xx_level: :debug, headers: ["content-type", "x-request-id"]
 ```
 
+or, for specific actions in the controller:
+
+```elixir
+plug Logster.ChangeConfig, [status_2xx_level: :debug, headers: ["content-type", "x-request-id"]] when action in [:index, :show]
+```
+
 This is specially useful for cases such as when you want to lower the log level for a healthcheck endpoint that gets hit every few seconds.
 
 ### Plug level

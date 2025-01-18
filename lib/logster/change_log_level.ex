@@ -10,7 +10,7 @@ defmodule Logster.ChangeLogLevel do
 
   To specify it only for a specific action, add the following:
 
-      plug Logster.ChangeLogLevel, to: :debug when action in [:index, :show]
+      plug Logster.ChangeLogLevel, [to: :debug] when action in [:index, :show]
   """
 
   import Plug.Conn
