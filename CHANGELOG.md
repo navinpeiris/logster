@@ -4,6 +4,7 @@
 - Change `formatter: :string` option to `formatter: :logfmt`.
 - Introduce `Logster.ChangeConfig` plug to change configuration options per request.
 - Add `status_2xx_level`, `status_3xx_level`, `status_4xx_level`, `status_5xx_level` configuration options to change the log level for different status groups.
+- Use Elixir 1.18+ JSON if available, else default to Jason.
 
 # 2.0.0-rc.3
 

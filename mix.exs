@@ -40,7 +40,7 @@ defmodule Logster.MixProject do
   defp deps do
     [
       {:plug, "~> 1.0"},
-      {:jason, "~> 1.1"},
+      {:jason, "~> 1.1", optional: true},
       {:earmark, "~> 1.0", only: :dev},
       {:ex_doc, "~> 0.14", only: :dev},
       {:mix_test_watch, "~> 1.0", only: :dev},

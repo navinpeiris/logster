@@ -1,9 +1,8 @@
 defmodule Logster.Formatters.JSON do
   def format(data) when is_map(data) do
-    case data |> Jason.encode_to_iodata() do
-      {:ok, json} -> json
-      {:error, _} -> %{msg: inspect(data)} |> format()
-    end
+    data |> Logster.JSON.encode_to_iodata!()
+  rescue
+    _ -> %{msg: inspect(data)} |> format()
   end
 
   def format([]), do: ""
