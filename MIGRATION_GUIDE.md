@@ -46,7 +46,12 @@
 
 4. Remove the line installing `Logster.Plugs.Logger` from your `endpoint.ex` file.
 
-5. Locate any calls to `Logster.Plugs.ChangeLogLevel` and use `Logster.ChangeConfig` plug instead.
+5. Locate any calls to `Logster.Plugs.ChangeLogLevel` and use `Logster.ChangeConfig` plug instead:
+
+   ```diff
+   -  plug Logster.Plugs.ChangeLogLevel, [to: :debug]
+   +  plug Logster.ChangeConfig, [status_2xx_level: :debug]
+   ```
 
 6. Add the following to `config.exs` to disable the default Phoenix logger:
 
@@ -60,4 +65,14 @@
 
 1. Locate any calls to `Logster.Plugs.Logger` and rename it to `Logster.Plug`
 
+   ```diff
+   -  plug Logster.Plugs.Logger
+   +  plug Logster.Plug
+   ```
+
 1. Locate any calls to `Logster.Plugs.ChangeLogLevel` and use `Logster.ChangeConfig` instead.
+
+   ```diff
+   -  plug Logster.Plugs.ChangeLogLevel, [to: :debug]
+   +  plug Logster.ChangeConfig, [status_2xx_level: :debug]
+   ```
