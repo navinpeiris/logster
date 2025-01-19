@@ -11,11 +11,9 @@ defmodule Logster.ChangeConfig do
       plug Logster.ChangeConfig, [status_2xx_level: :debug] when action in [:index, :show]
   """
 
-  import Plug.Conn
-
-  @spec init(Plug.opts()) :: Plug.opts()
+  @spec init(Keyword.t()) :: Keyword.t()
   def init(opts), do: opts
 
-  @spec call(Plug.Conn.t(), Plug.opts()) :: Plug.Conn.t()
-  def call(conn, opts), do: conn |> put_private(:logster, opts)
+  @spec call(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
+  def call(conn, opts), do: conn |> Plug.Conn.put_private(:logster, opts)
 end

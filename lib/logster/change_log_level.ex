@@ -13,12 +13,10 @@ defmodule Logster.ChangeLogLevel do
       plug Logster.ChangeLogLevel, [to: :debug] when action in [:index, :show]
   """
 
-  import Plug.Conn
-
   @deprecated "Use `Logster.ChangeConfig` instead"
   @spec init(Keyword.t()) :: Keyword.t()
   def init(opts), do: Keyword.get(opts, :to, :info)
 
   @spec call(Plug.Conn.t(), atom()) :: Plug.Conn.t()
-  def call(conn, log_level), do: conn |> put_private(:logster, log: log_level)
+  def call(conn, log_level), do: conn |> Plug.Conn.put_private(:logster, log: log_level)
 end
