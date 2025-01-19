@@ -167,7 +167,7 @@ defmodule Logster do
     |> maybe_put_duration(duration_us, log_config)
     |> maybe_put_headers(conn, log_config)
     |> maybe_put_status(conn, log_config)
-    |> maybe_put_query_params(conn, log_config)
+    |> maybe_put_query(conn, log_config)
     |> maybe_put_params(conn, log_config)
     |> maybe_put_phoenix_action(conn, log_config)
     |> maybe_put_phoenix_controller(conn, log_config)
@@ -210,27 +210,27 @@ defmodule Logster do
     end
   end
 
-  defp maybe_put_query_params(fields, conn, %{extra_fields: extra_fields} = log_config) do
-    if :query_params in extra_fields do
-      fields |> do_put_query_params(conn, log_config)
+  defp maybe_put_query(fields, conn, %{extra_fields: extra_fields} = log_config) do
+    if :query in extra_fields do
+      fields |> do_put_query(conn, log_config)
     else
       fields
     end
   end
 
-  defp do_put_query_params(fields, %Plug.Conn{query_params: %Plug.Conn.Unfetched{}}, _log_config),
-    do: fields |> Keyword.put(:query_params, "[UNFETCHED]")
+  defp do_put_query(fields, %Plug.Conn{query_params: %Plug.Conn.Unfetched{}}, _log_config),
+    do: fields |> Keyword.put(:query, "[UNFETCHED]")
 
-  defp do_put_query_params(fields, %Plug.Conn{query_params: query_params}, log_config),
-    do: do_put_query_params(fields, query_params, log_config)
+  defp do_put_query(fields, %Plug.Conn{query_params: query}, log_config),
+    do: do_put_query(fields, query, log_config)
 
-  defp do_put_query_params(fields, query_params, log_config) do
-    query_params =
-      query_params
+  defp do_put_query(fields, query, log_config) do
+    query =
+      query
       |> filter_values(log_config)
       |> format_values()
 
-    fields |> Keyword.put(:query_params, query_params)
+    fields |> Keyword.put(:query, query)
   end
 
   defp maybe_put_params(fields, conn, %{excludes: excludes} = log_config) do

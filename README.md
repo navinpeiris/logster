@@ -220,12 +220,12 @@ config :logster, headers: ["my-header-one", "my-header-two"]
 One or more of the following fields can be optionally enabled through the `extra_fields` configuration option:
 
 - host
-- query_params
+- query
 
 Example:
 
 ```elixir
-config :logster, extra_fields: [:host, :query_params]
+config :logster, extra_fields: [:host, :query]
 ```
 
 ### Excluding fields
